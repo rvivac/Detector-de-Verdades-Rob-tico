@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#00ffcc" />
     <meta name="description" content="Detector de Verdades robótico (simulador) para crianças" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Detector" />
     <title>Detector de Verdades Robótico</title>
 
     <!-- Tailwind via CDN -->
@@ -147,11 +150,32 @@
         50% { box-shadow: 0 0 18px rgba(0,255,204,0.22), 0 0 44px rgba(57,255,20,0.12); }
       }
       .btn-glow { animation: pulseGlow 2.2s ease-in-out infinite; }
+
+      .camera-shell {
+        position: relative;
+        overflow: hidden;
+        min-height: 180px;
+        background:
+          radial-gradient(circle at 50% 20%, rgba(0, 255, 204, 0.14), transparent 45%),
+          linear-gradient(180deg, rgba(2, 6, 23, 0.92), rgba(0, 0, 0, 0.94));
+      }
+
+      .camera-shell[data-state="ready"] {
+        box-shadow: 0 0 20px rgba(57, 255, 20, 0.22);
+      }
+
+      .camera-video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transform: scaleX(-1);
+        filter: contrast(1.08) saturate(1.05) brightness(0.9);
+      }
     </style>
 
-    <!-- Manifest "inline" (via Blob). Observação: PWA 100% offline em arquivo único pode variar por navegador. -->
-    <link rel="manifest" id="manifestLink" href="" />
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'%3E%3Cdefs%3E%3CradialGradient id='g' cx='50%25' cy='35%25'%3E%3Cstop offset='0%25' stop-color='%2300ffcc'/%3E%3Cstop offset='100%25' stop-color='%23001512'/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect width='128' height='128' rx='24' fill='url(%23g)'/%3E%3Cpath d='M34 72c0-16 12-30 30-30s30 14 30 30' fill='none' stroke='%2339ff14' stroke-width='10' stroke-linecap='round'/%3E%3Ccircle cx='52' cy='60' r='6' fill='%23000'/%3E%3Ccircle cx='76' cy='60' r='6' fill='%23000'/%3E%3Cpath d='M46 84h36' stroke='%2300ffcc' stroke-width='8' stroke-linecap='round'/%3E%3C/svg%3E" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" type="image/png" href="./logo.png" />
+    <link rel="apple-touch-icon" href="./logo.png" />
   </head>
 
   <body class="min-h-dvh bg-black text-slate-100 bg-grid">
@@ -229,6 +253,43 @@
                         <span>LASER SAFE MODE: ON</span>
                         <span class="inline-block h-1.5 w-1.5 rounded-full bg-neon-cyan/70"></span>
                       </div>
+
+                      <div class="mt-4 rounded-xl border border-neon-cyan/20 bg-black/45 p-3 text-left">
+                        <div class="flex items-center justify-between gap-3">
+                          <div>
+                            <div class="text-xs font-mono tracking-widest text-slate-400">FACE SENSOR</div>
+                            <div id="cameraStatusText" class="mt-1 text-sm font-mono text-amber-200">Câmera desligada</div>
+                          </div>
+                          <button
+                            id="cameraBtn"
+                            type="button"
+                            class="rounded-xl border border-neon-green/25 bg-neon-green/10 px-3 py-2 text-xs font-mono text-neon-green hover:bg-neon-green/15 focus:outline-none focus:ring-2 focus:ring-neon-green/25"
+                          >
+                            Ativar câmera
+                          </button>
+                        </div>
+
+                        <div
+                          id="cameraShell"
+                          data-state="idle"
+                          class="camera-shell mt-3 rounded-xl border border-neon-cyan/15"
+                        >
+                          <video id="cameraPreview" class="camera-video hidden" autoplay playsinline muted></video>
+                          <div class="absolute inset-0 border border-neon-cyan/15 pointer-events-none"></div>
+                          <div class="absolute inset-x-4 top-4 flex items-center justify-between text-[11px] font-mono text-slate-300 pointer-events-none">
+                            <span>FRONTAL CAM</span>
+                            <span id="cameraFrameText">Aguardando câmera</span>
+                          </div>
+                          <div id="cameraPlaceholder" class="absolute inset-0 grid place-items-center p-4 text-center">
+                            <div>
+                              <div class="text-sm font-mono text-neon-cyan">Ative a câmera frontal</div>
+                              <div class="mt-2 text-xs font-mono text-slate-400">
+                                O scanner só libera quando detectar um rosto próximo.
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -260,7 +321,7 @@
               </div>
 
               <p class="mt-3 text-xs text-slate-400">
-                Dica: no celular, toque no botão com precisão robótica.
+                Dica: no celular, libere a câmera frontal e aproxime o rosto antes de escanear.
               </p>
             </div>
           </section>
@@ -308,71 +369,11 @@
 
     <script>
       // --------------------------
-      // PWA "single-file": manifest via Blob; service worker tenta registrar (pode variar por navegador).
+      // PWA com manifest e service worker externos para melhorar a instalacao no celular.
       // --------------------------
       (function setupPWA() {
-        const manifest = {
-          name: "Detector de Verdades Robótico",
-          short_name: "Detector",
-          start_url: ".",
-          display: "standalone",
-          background_color: "#000000",
-          theme_color: "#00ffcc",
-          description: "Simulador de Detector de Verdades para crianças",
-          icons: [
-            {
-              src:
-                "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Cdefs%3E%3CradialGradient id='g' cx='50%25' cy='35%25'%3E%3Cstop offset='0%25' stop-color='%2300ffcc'/%3E%3Cstop offset='100%25' stop-color='%23001512'/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect width='192' height='192' rx='36' fill='url(%23g)'/%3E%3Cpath d='M48 108c0-24 18-45 48-45s48 21 48 45' fill='none' stroke='%2339ff14' stroke-width='14' stroke-linecap='round'/%3E%3Ccircle cx='78' cy='90' r='9' fill='%23000'/%3E%3Ccircle cx='114' cy='90' r='9' fill='%23000'/%3E%3Cpath d='M70 128h52' stroke='%2300ffcc' stroke-width='12' stroke-linecap='round'/%3E%3C/svg%3E",
-              sizes: "192x192",
-              type: "image/svg+xml",
-            },
-          ],
-        };
-
-        const manifestBlob = new Blob([JSON.stringify(manifest)], { type: "application/manifest+json" });
-        const manifestUrl = URL.createObjectURL(manifestBlob);
-        const manifestLink = document.getElementById("manifestLink");
-        manifestLink.href = manifestUrl;
-
-        // Service Worker (cache do próprio arquivo). Alguns navegadores podem recusar SW vindo de blob.
         if ("serviceWorker" in navigator) {
-          const swCode = `
-            const CACHE = "detector-verdades-v1";
-            self.addEventListener("install", (event) => {
-              event.waitUntil((async () => {
-                const cache = await caches.open(CACHE);
-                // Tenta cachear a própria página
-                try { await cache.add(new Request(self.registration.scope, {cache: "reload"})); } catch (e) {}
-                self.skipWaiting();
-              })());
-            });
-            self.addEventListener("activate", (event) => {
-              event.waitUntil((async () => {
-                const keys = await caches.keys();
-                await Promise.all(keys.map((k) => (k === CACHE ? null : caches.delete(k))));
-                self.clients.claim();
-              })());
-            });
-            self.addEventListener("fetch", (event) => {
-              event.respondWith((async () => {
-                const cached = await caches.match(event.request, { ignoreSearch: true });
-                if (cached) return cached;
-                try {
-                  const fresh = await fetch(event.request);
-                  const cache = await caches.open(CACHE);
-                  cache.put(event.request, fresh.clone());
-                  return fresh;
-                } catch (e) {
-                  return cached || new Response("Offline", { status: 200, headers: { "Content-Type": "text/plain; charset=utf-8" }});
-                }
-              })());
-            });
-          `;
-          try {
-            const swBlob = new Blob([swCode], { type: "text/javascript" });
-            const swUrl = URL.createObjectURL(swBlob);
-            navigator.serviceWorker.register(swUrl).catch(() => {});
-          } catch (_) {}
+          navigator.serviceWorker.register("./sw.js").catch(() => {});
         }
       })();
 
@@ -383,6 +384,12 @@
       const scanBtn = $("scanBtn");
       const reScanBtn = $("reScanBtn");
       const resetBtn = $("resetBtn");
+      const cameraBtn = $("cameraBtn");
+      const cameraPreview = $("cameraPreview");
+      const cameraShell = $("cameraShell");
+      const cameraPlaceholder = $("cameraPlaceholder");
+      const cameraStatusText = $("cameraStatusText");
+      const cameraFrameText = $("cameraFrameText");
       const scanner = $("scanner");
       const statusText = $("statusText");
       const displayMain = $("displayMain");
@@ -395,6 +402,17 @@
       let abortScan = null;
       let lastSide = "right";
       let lastResultText = "";
+      let cameraStream = null;
+      let cameraLoop = null;
+      let detectorLoadPromise = null;
+      let detectorEngine = null;
+      let detectorMode = "none";
+      let detectorBusy = false;
+      let cameraReady = false;
+      let faceVisible = false;
+      let faceCloseEnough = false;
+      let stableFaceFrames = 0;
+      let lastPresenceState = "idle";
 
       const scanPhrases = [
         "Analisando DNA...",
@@ -692,13 +710,263 @@
         displaySub.textContent = sub;
       }
 
+      function setCameraStatus(text, tone = "warn") {
+        cameraStatusText.textContent = text;
+        cameraStatusText.className =
+          tone === "good"
+            ? "mt-1 text-sm font-mono text-neon-green"
+            : tone === "cyan"
+              ? "mt-1 text-sm font-mono text-neon-cyan"
+              : "mt-1 text-sm font-mono text-amber-200";
+      }
+
+      function refreshScanAvailability() {
+        const canScan = cameraReady && faceCloseEnough && !scanning;
+        scanBtn.disabled = !canScan;
+        scanBtn.classList.toggle("opacity-60", !canScan);
+        scanBtn.classList.toggle("cursor-not-allowed", !canScan);
+      }
+
       function setScanningUI(on) {
         scanner.classList.toggle("scanning", on);
-        scanBtn.disabled = on;
-        scanBtn.classList.toggle("opacity-60", on);
-        scanBtn.classList.toggle("cursor-not-allowed", on);
         signalBox.textContent = on ? "SCAN" : "OK";
         signalBox.className = on ? "mt-1 font-mono text-3xl text-amber-300" : "mt-1 font-mono text-3xl text-neon-green";
+        refreshScanAvailability();
+      }
+
+      function getFaceBox(face) {
+        const box = face?.boundingBox;
+        if (!box) return null;
+
+        return {
+          width: Number(box.width) || 0,
+          height: Number(box.height) || 0,
+        };
+      }
+
+      async function loadFaceDetector() {
+        if (detectorEngine) return detectorEngine;
+        if (detectorLoadPromise) return detectorLoadPromise;
+
+        detectorLoadPromise = (async () => {
+          try {
+            const vision = await import("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3");
+            const visionTasks = await vision.FilesetResolver.forVisionTasks(
+              "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm"
+            );
+
+            detectorEngine = await vision.FaceDetector.createFromOptions(visionTasks, {
+              baseOptions: {
+                modelAssetPath:
+                  "https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/latest/blaze_face_short_range.tflite",
+                delegate: "GPU",
+              },
+              runningMode: "VIDEO",
+              minDetectionConfidence: 0.55,
+            });
+            detectorMode = "mediapipe";
+            addLog("Detector facial carregado.", "good");
+            return detectorEngine;
+          } catch (error) {
+            if ("FaceDetector" in window) {
+              detectorEngine = new window.FaceDetector({ fastMode: true, maxDetectedFaces: 1 });
+              detectorMode = "native";
+              addLog("Detector facial nativo carregado.", "good");
+              return detectorEngine;
+            }
+
+            detectorMode = "unavailable";
+            throw error;
+          }
+        })().catch((error) => {
+          detectorLoadPromise = null;
+          detectorEngine = null;
+          throw error;
+        });
+
+        return detectorLoadPromise;
+      }
+
+      async function detectFaces() {
+        if (!detectorEngine || cameraPreview.readyState < 2) return [];
+
+        if (detectorMode === "mediapipe") {
+          const result = detectorEngine.detectForVideo(cameraPreview, performance.now());
+          return result?.detections ?? [];
+        }
+
+        if (detectorMode === "native") {
+          return detectorEngine.detect(cameraPreview);
+        }
+
+        return [];
+      }
+
+      function updatePresenceState(nextState) {
+        if (lastPresenceState === nextState) return;
+        lastPresenceState = nextState;
+
+        if (nextState === "ready") {
+          addLog("Rosto validado. Scanner liberado.", "good");
+        } else if (nextState === "far") {
+          addLog("Rosto detectado, mas ainda está longe da câmera.", "warn");
+        } else if (nextState === "missing") {
+          addLog("Nenhum rosto detectado pela câmera.", "warn");
+        }
+      }
+
+      function updateFaceStatusFromDetections(detections) {
+        const face = detections
+          .map(getFaceBox)
+          .filter(Boolean)
+          .sort((a, b) => b.width * b.height - a.width * a.height)[0];
+
+        faceVisible = Boolean(face);
+
+        if (!faceVisible || !cameraPreview.videoWidth || !cameraPreview.videoHeight) {
+          stableFaceFrames = 0;
+          faceCloseEnough = false;
+          cameraShell.dataset.state = "search";
+          cameraFrameText.textContent = "Nenhum rosto";
+          setCameraStatus("Nenhum rosto detectado", "warn");
+          updatePresenceState("missing");
+          refreshScanAvailability();
+          return;
+        }
+
+        const widthRatio = face.width / cameraPreview.videoWidth;
+        const heightRatio = face.height / cameraPreview.videoHeight;
+        const nearEnough = widthRatio >= 0.22 || heightRatio >= 0.3;
+
+        if (nearEnough) {
+          stableFaceFrames += 1;
+        } else {
+          stableFaceFrames = 0;
+        }
+
+        faceCloseEnough = stableFaceFrames >= 2;
+        cameraShell.dataset.state = faceCloseEnough ? "ready" : "search";
+        cameraFrameText.textContent = faceCloseEnough ? "Rosto validado" : "Aproxime o rosto";
+
+        if (faceCloseEnough) {
+          setCameraStatus("Rosto detectado e pronto", "good");
+          updatePresenceState("ready");
+        } else {
+          setCameraStatus("Rosto detectado, mas longe", "warn");
+          updatePresenceState("far");
+        }
+
+        refreshScanAvailability();
+      }
+
+      function startCameraLoop() {
+        if (cameraLoop) cancelAnimationFrame(cameraLoop);
+        let lastTick = 0;
+
+        const loop = async (ts) => {
+          if (!cameraReady) return;
+          cameraLoop = requestAnimationFrame(loop);
+
+          if (detectorBusy || ts - lastTick < 220) return;
+          lastTick = ts;
+          detectorBusy = true;
+
+          try {
+            const detections = await detectFaces();
+            updateFaceStatusFromDetections(detections);
+          } catch (_) {
+            setCameraStatus("Falha na leitura facial", "warn");
+            cameraFrameText.textContent = "Erro no sensor";
+          } finally {
+            detectorBusy = false;
+          }
+        };
+
+        cameraLoop = requestAnimationFrame(loop);
+      }
+
+      async function startCamera() {
+        if (cameraReady && cameraStream) {
+          refreshScanAvailability();
+          return true;
+        }
+
+        if (!navigator.mediaDevices?.getUserMedia) {
+          setCameraStatus("Seu navegador não suporta câmera", "warn");
+          setDisplay("Câmera indisponível.", "Abra o app em um navegador mais recente.");
+          addLog("Navegador sem suporte a câmera.", "warn");
+          return false;
+        }
+
+        cameraBtn.disabled = true;
+        cameraBtn.classList.add("opacity-60");
+        setCameraStatus("Ligando câmera...", "cyan");
+        cameraFrameText.textContent = "Inicializando";
+
+        try {
+          await loadFaceDetector();
+
+          cameraStream = await navigator.mediaDevices.getUserMedia({
+            audio: false,
+            video: {
+              facingMode: "user",
+              width: { ideal: 640 },
+              height: { ideal: 480 },
+            },
+          });
+
+          cameraPreview.srcObject = cameraStream;
+          await cameraPreview.play();
+          cameraReady = true;
+          cameraPreview.classList.remove("hidden");
+          cameraPlaceholder.classList.add("hidden");
+          cameraShell.dataset.state = "search";
+          cameraBtn.textContent = "Câmera ativa";
+          setCameraStatus("Procurando rosto...", "cyan");
+          cameraFrameText.textContent = "Posicione o rosto";
+          addLog("Câmera frontal ativada.", "good");
+          startCameraLoop();
+          refreshScanAvailability();
+          return true;
+        } catch (_) {
+          cameraReady = false;
+          faceVisible = false;
+          faceCloseEnough = false;
+          stableFaceFrames = 0;
+          cameraPreview.classList.add("hidden");
+          cameraPlaceholder.classList.remove("hidden");
+          cameraBtn.textContent = "Tentar câmera";
+          setCameraStatus("Permissão negada ou sensor indisponível", "warn");
+          cameraFrameText.textContent = "Falha";
+          setDisplay("Câmera indisponível.", "Libere a permissão e tente novamente.");
+          addLog("Não foi possível ativar a câmera ou o detector facial.", "warn");
+          refreshScanAvailability();
+          return false;
+        } finally {
+          cameraBtn.disabled = false;
+          cameraBtn.classList.remove("opacity-60");
+        }
+      }
+
+      async function ensureFaceReadyForScan() {
+        if (!cameraReady) {
+          const ok = await startCamera();
+          if (!ok) return false;
+        }
+
+        if (!faceCloseEnough) {
+          setStatus("Erro", "amber");
+          if (faceVisible) {
+            setDisplay("ERRO DE PROXIMIDADE.", "Aproxime mais o rosto da câmera frontal.");
+            addLog("Escaneamento bloqueado: o rosto ainda está longe.", "warn");
+          } else {
+            setDisplay("ERRO DE PROXIMIDADE.", "Nenhum rosto válido detectado na câmera.");
+            addLog("Escaneamento bloqueado: aproxime uma pessoa da câmera.", "warn");
+          }
+          return false;
+        }
+
+        return true;
       }
 
       // --------------------------
@@ -763,6 +1031,8 @@
       // --------------------------
       async function startScan(resultMode, fixedResult = null) {
         if (scanning) return;
+        if (!(await ensureFaceReadyForScan())) return;
+
         scanning = true;
         abortScan = new AbortController();
         const signal = abortScan.signal;
@@ -785,12 +1055,15 @@
 
         let phraseTimer = null;
         let raf = null;
+        let faceGuard = null;
 
         const stopTimers = () => {
           if (phraseTimer) clearInterval(phraseTimer);
           phraseTimer = null;
           if (raf) cancelAnimationFrame(raf);
           raf = null;
+          if (faceGuard) clearInterval(faceGuard);
+          faceGuard = null;
         };
 
         // Frases mudando rápido
@@ -811,6 +1084,18 @@
         };
         tick();
 
+        // Interrompe se a pessoa se afastar ou sumir da câmera durante o scan.
+        faceGuard = setInterval(() => {
+          if (!cameraReady) {
+            abortScan.abort("camera-off");
+            return;
+          }
+
+          if (!faceCloseEnough) {
+            abortScan.abort(faceVisible ? "face-far" : "face-missing");
+          }
+        }, 250);
+
         // Aguarda 7s ou cancelamento
         try {
           await new Promise((resolve, reject) => {
@@ -819,19 +1104,27 @@
               "abort",
               () => {
                 clearTimeout(to);
-                reject(new Error("aborted"));
+                reject(signal.reason || "aborted");
               },
               { once: true }
             );
           });
-        } catch (_) {
+        } catch (error) {
           stopTimers();
           scanning = false;
           setScanningUI(false);
-          setStatus("Pronto", "green");
           timeBox.textContent = "--";
-          setDisplay("Scan cancelado.", "Aperte Escanear novamente.");
-          addLog("Varredura cancelada.", "warn");
+          const reason = typeof error === "string" ? error : "aborted";
+
+          if (reason === "face-far" || reason === "face-missing" || reason === "camera-off") {
+            setStatus("Erro", "amber");
+            setDisplay("ERRO DE PROXIMIDADE.", "Mantenha um rosto perto da câmera durante todo o scan.");
+            addLog("Varredura interrompida: a pessoa se afastou da câmera.", "warn");
+          } else {
+            setStatus("Pronto", "green");
+            setDisplay("Scan cancelado.", "Aperte Escanear novamente.");
+            addLog("Varredura cancelada.", "warn");
+          }
           return;
         }
 
@@ -893,6 +1186,10 @@
         startScan("repeat", lastResultText);
       });
 
+      cameraBtn.addEventListener("click", async () => {
+        await startCamera();
+      });
+
       resetBtn.addEventListener("click", resetAll);
 
       // --------------------------
@@ -914,7 +1211,8 @@
       });
 
       // Boot log
-      addLog("Sistema online. Pronto para escanear.", "good");
+      refreshScanAvailability();
+      addLog("Sistema online. Ative a câmera para validar um rosto.", "good");
     </script>
   </body>
 </html>
