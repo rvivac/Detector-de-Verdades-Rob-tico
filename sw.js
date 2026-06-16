@@ -1,4 +1,4 @@
-const CACHE_NAME = "detector-verdades-v2";
+const CACHE_NAME = "detector-verdades-v3";
 const APP_SHELL = ["./", "./index.html", "./manifest.webmanifest", "./logo.png"];
 
 self.addEventListener("install", (event) => {
@@ -26,6 +26,24 @@ self.addEventListener("fetch", (event) => {
 
   event.respondWith(
     (async () => {
+      const isPageRequest =
+        event.request.mode === "navigate" ||
+        event.request.destination === "document" ||
+        event.request.url.endsWith("/") ||
+        event.request.url.endsWith(".html");
+
+      if (isPageRequest) {
+        try {
+          const fresh = await fetch(event.request);
+          const cache = await caches.open(CACHE_NAME);
+          cache.put(event.request, fresh.clone());
+          return fresh;
+        } catch (error) {
+          const cachedPage = await caches.match(event.request, { ignoreSearch: true });
+          return cachedPage || caches.match("./index.html");
+        }
+      }
+
       const cached = await caches.match(event.request, { ignoreSearch: true });
       if (cached) return cached;
 
