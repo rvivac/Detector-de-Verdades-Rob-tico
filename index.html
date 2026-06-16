@@ -1,0 +1,920 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#00ffcc" />
+    <meta name="description" content="Detector de Verdades robótico (simulador) para crianças" />
+    <title>Detector de Verdades Robótico</title>
+
+    <!-- Tailwind via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              mono: ["ui-monospace", "SFMono-Regular", "Menlo", "Monaco", "Consolas", "Liberation Mono", "Courier New", "monospace"],
+            },
+            colors: {
+              neon: {
+                green: "#39ff14",
+                cyan: "#00ffcc",
+              },
+            },
+            boxShadow: {
+              glow: "0 0 18px rgba(0,255,204,.35), 0 0 40px rgba(57,255,20,.12)",
+            },
+          },
+        },
+      };
+    </script>
+
+    <style>
+      :root {
+        --grid: rgba(0, 255, 204, 0.06);
+        --glow: rgba(0, 255, 204, 0.38);
+      }
+
+      /* Fundo cyberpunk com grade sutil */
+      .bg-grid {
+        background-image:
+          linear-gradient(var(--grid) 1px, transparent 1px),
+          linear-gradient(90deg, var(--grid) 1px, transparent 1px),
+          radial-gradient(circle at 20% 10%, rgba(57, 255, 20, 0.11), transparent 45%),
+          radial-gradient(circle at 80% 30%, rgba(0, 255, 204, 0.10), transparent 40%),
+          radial-gradient(circle at 50% 95%, rgba(0, 255, 204, 0.08), transparent 55%);
+        background-size: 36px 36px, 36px 36px, auto, auto, auto;
+        background-position: 0 0, 0 0, center, center, center;
+      }
+
+      .scan-frame {
+        position: relative;
+        overflow: hidden;
+      }
+
+      /* Linhas horizontais animadas (efeito laser) */
+      .scan-lines::before {
+        content: "";
+        position: absolute;
+        inset: -40% 0;
+        background:
+          repeating-linear-gradient(
+            to bottom,
+            rgba(0, 255, 204, 0.00) 0px,
+            rgba(0, 255, 204, 0.00) 9px,
+            rgba(0, 255, 204, 0.35) 10px,
+            rgba(0, 255, 204, 0.00) 12px
+          );
+        transform: translateY(-30%);
+        opacity: 0.0;
+        filter: drop-shadow(0 0 6px rgba(0, 255, 204, 0.45));
+        transition: opacity 200ms ease;
+      }
+
+      .scan-lines::after {
+        content: "";
+        position: absolute;
+        left: -20%;
+        right: -20%;
+        top: -30%;
+        height: 6px;
+        background: linear-gradient(90deg, transparent, rgba(57, 255, 20, 0.85), transparent);
+        opacity: 0.0;
+        filter: blur(0.2px) drop-shadow(0 0 10px rgba(57, 255, 20, 0.7));
+        transform: translateY(0);
+        transition: opacity 200ms ease;
+      }
+
+      @keyframes sweep {
+        0% {
+          transform: translateY(-30%);
+        }
+        100% {
+          transform: translateY(30%);
+        }
+      }
+
+      @keyframes laser {
+        0% {
+          transform: translateY(0);
+        }
+        100% {
+          transform: translateY(520px);
+        }
+      }
+
+      .scanning .scan-lines::before {
+        opacity: 1;
+        animation: sweep 1.1s linear infinite;
+      }
+
+      .scanning .scan-lines::after {
+        opacity: 1;
+        animation: laser 0.9s linear infinite;
+      }
+
+      /* Efeito CRT no display */
+      .crt {
+        position: relative;
+      }
+      .crt::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: repeating-linear-gradient(
+          to bottom,
+          rgba(0, 0, 0, 0.0) 0px,
+          rgba(0, 0, 0, 0.0) 2px,
+          rgba(0, 0, 0, 0.22) 3px
+        );
+        mix-blend-mode: multiply;
+        opacity: 0.55;
+      }
+      .crt::after {
+        content: "";
+        position: absolute;
+        inset: -2px;
+        pointer-events: none;
+        background: radial-gradient(circle at 50% 20%, rgba(0, 255, 204, 0.10), transparent 45%);
+        opacity: 0.7;
+      }
+
+      /* Brilho pulsante do botão */
+      @keyframes pulseGlow {
+        0%, 100% { box-shadow: 0 0 0 rgba(0,255,204,0.0), 0 0 26px rgba(0,255,204,0.18); }
+        50% { box-shadow: 0 0 18px rgba(0,255,204,0.22), 0 0 44px rgba(57,255,20,0.12); }
+      }
+      .btn-glow { animation: pulseGlow 2.2s ease-in-out infinite; }
+    </style>
+
+    <!-- Manifest "inline" (via Blob). Observação: PWA 100% offline em arquivo único pode variar por navegador. -->
+    <link rel="manifest" id="manifestLink" href="" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'%3E%3Cdefs%3E%3CradialGradient id='g' cx='50%25' cy='35%25'%3E%3Cstop offset='0%25' stop-color='%2300ffcc'/%3E%3Cstop offset='100%25' stop-color='%23001512'/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect width='128' height='128' rx='24' fill='url(%23g)'/%3E%3Cpath d='M34 72c0-16 12-30 30-30s30 14 30 30' fill='none' stroke='%2339ff14' stroke-width='10' stroke-linecap='round'/%3E%3Ccircle cx='52' cy='60' r='6' fill='%23000'/%3E%3Ccircle cx='76' cy='60' r='6' fill='%23000'/%3E%3Cpath d='M46 84h36' stroke='%2300ffcc' stroke-width='8' stroke-linecap='round'/%3E%3C/svg%3E" />
+  </head>
+
+  <body class="min-h-dvh bg-black text-slate-100 bg-grid">
+    <div class="min-h-dvh flex flex-col">
+      <header class="px-4 pt-6 pb-4 sm:px-8">
+        <div class="mx-auto max-w-4xl">
+          <div class="flex items-start justify-between gap-4">
+            <div>
+              <div class="inline-flex items-center gap-2">
+                <span class="h-2.5 w-2.5 rounded-full bg-neon-cyan shadow-[0_0_14px_rgba(0,255,204,.65)]"></span>
+                <span class="h-2.5 w-2.5 rounded-full bg-neon-green shadow-[0_0_14px_rgba(57,255,20,.55)]"></span>
+                <span class="h-2.5 w-2.5 rounded-full bg-neon-cyan/40"></span>
+              </div>
+              <h1 class="mt-3 text-2xl sm:text-3xl font-mono tracking-tight">
+                Detector de Verdades Robótico
+              </h1>
+              <p class="mt-1 text-sm sm:text-base text-slate-300">
+                Um scanner sci-fi que decide a verdade com tecnologia super-secreta.
+              </p>
+            </div>
+
+            <button
+              id="installBtn"
+              class="hidden shrink-0 rounded-xl border border-neon-cyan/30 bg-black/40 px-3 py-2 text-sm font-mono text-neon-cyan hover:bg-black/55 focus:outline-none focus:ring-2 focus:ring-neon-cyan/40"
+              type="button"
+              title="Instalar como app"
+            >
+              Instalar
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main class="flex-1 px-4 pb-10 sm:px-8">
+        <div class="mx-auto max-w-4xl grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <!-- Scanner -->
+          <section class="rounded-2xl border border-neon-cyan/20 bg-black/40 shadow-glow">
+            <div class="p-4 sm:p-6">
+              <div class="flex items-center justify-between gap-3">
+                <h2 class="font-mono text-lg text-neon-cyan">Módulo de Scanner</h2>
+                <div class="text-xs font-mono text-slate-300">
+                  Status: <span id="statusText" class="text-neon-green">Pronto</span>
+                </div>
+              </div>
+
+              <div class="mt-4 scan-frame rounded-2xl border border-neon-green/15 bg-gradient-to-b from-black/60 to-black/35">
+                <div
+                  id="scanner"
+                  class="scan-lines relative h-[280px] sm:h-[340px] p-4 sm:p-6 scanning:outline-none"
+                >
+                  <!-- HUD -->
+                  <div class="absolute inset-0 pointer-events-none">
+                    <div class="absolute left-4 top-4 h-7 w-7 border-l-2 border-t-2 border-neon-cyan/60"></div>
+                    <div class="absolute right-4 top-4 h-7 w-7 border-r-2 border-t-2 border-neon-cyan/60"></div>
+                    <div class="absolute left-4 bottom-4 h-7 w-7 border-l-2 border-b-2 border-neon-cyan/60"></div>
+                    <div class="absolute right-4 bottom-4 h-7 w-7 border-r-2 border-b-2 border-neon-cyan/60"></div>
+                  </div>
+
+                  <div class="relative h-full grid place-items-center">
+                    <div class="text-center max-w-[28rem]">
+                      <div class="text-xs font-mono tracking-widest text-slate-300">
+                        SCAN-ENGINE v3.1
+                      </div>
+                      <div class="mt-3 rounded-xl border border-neon-cyan/20 bg-black/60 p-4 crt">
+                        <div id="displayMain" class="font-mono text-lg sm:text-xl text-neon-cyan">
+                          Encoste o dedo e aperte Escanear
+                        </div>
+                        <div class="mt-2 text-xs font-mono text-slate-300">
+                          <span id="displaySub">Sem garantias científicas.</span>
+                        </div>
+                      </div>
+
+                      <div class="mt-4 flex items-center justify-center gap-2 text-xs font-mono text-slate-400">
+                        <span class="inline-block h-1.5 w-1.5 rounded-full bg-neon-green/70"></span>
+                        <span>LASER SAFE MODE: ON</span>
+                        <span class="inline-block h-1.5 w-1.5 rounded-full bg-neon-cyan/70"></span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mt-5 flex flex-col sm:flex-row gap-3">
+                <button
+                  id="scanBtn"
+                  type="button"
+                  class="btn-glow w-full rounded-2xl border border-neon-cyan/35 bg-gradient-to-b from-black/40 to-black/70 px-5 py-4 font-mono text-base sm:text-lg text-neon-cyan hover:from-black/35 hover:to-black/65 focus:outline-none focus:ring-2 focus:ring-neon-cyan/40 active:scale-[0.99]"
+                >
+                  Escanear
+                </button>
+                <button
+                  id="reScanBtn"
+                  type="button"
+                  class="w-full sm:w-auto rounded-2xl border border-sky-300/25 bg-sky-500/10 px-5 py-4 font-mono text-sm text-sky-200 hover:bg-sky-500/15 focus:outline-none focus:ring-2 focus:ring-sky-300/30 shadow-[0_0_18px_rgba(56,189,248,.16)]"
+                  title="Repetir o escaneamento mostrando o diagnóstico anterior"
+                >
+                  AUX
+                </button>
+                <button
+                  id="resetBtn"
+                  type="button"
+                  class="w-full sm:w-auto rounded-2xl border border-white/10 bg-white/5 px-5 py-4 font-mono text-sm text-slate-200 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/15"
+                >
+                  Reset
+                </button>
+              </div>
+
+              <p class="mt-3 text-xs text-slate-400">
+                Dica: no celular, toque no botão com precisão robótica.
+              </p>
+            </div>
+          </section>
+
+          <!-- Painel -->
+          <section class="rounded-2xl border border-neon-green/15 bg-black/35 shadow-glow">
+            <div class="p-4 sm:p-6">
+              <h2 class="font-mono text-lg text-neon-green">Painel de Diagnóstico</h2>
+
+              <div class="mt-4 grid grid-cols-2 gap-3">
+                <div class="rounded-xl border border-neon-cyan/15 bg-black/55 p-4">
+                  <div class="text-xs font-mono text-slate-400">Tempo</div>
+                  <div id="timeBox" class="mt-1 font-mono text-3xl text-neon-cyan">--</div>
+                </div>
+                <div class="rounded-xl border border-neon-green/15 bg-black/55 p-4">
+                  <div class="text-xs font-mono text-slate-400">Sinal</div>
+                  <div id="signalBox" class="mt-1 font-mono text-3xl text-neon-green">OK</div>
+                </div>
+              </div>
+
+              <div class="mt-4 rounded-xl border border-white/10 bg-black/55 p-4">
+                <div class="text-xs font-mono text-slate-400">Log</div>
+                <div id="log" class="mt-2 space-y-2 font-mono text-sm text-slate-200 max-h-[260px] overflow-auto pr-1"></div>
+              </div>
+
+              <div class="mt-4 rounded-xl border border-neon-cyan/10 bg-black/45 p-4">
+                <div class="text-xs font-mono text-slate-400">Modo</div>
+                <div class="mt-2 flex flex-wrap gap-2">
+                  <span class="rounded-full border border-neon-cyan/25 bg-black/60 px-3 py-1 text-xs font-mono text-neon-cyan">Robô</span>
+                  <span class="rounded-full border border-neon-green/25 bg-black/60 px-3 py-1 text-xs font-mono text-neon-green">Bipes retrô</span>
+                  <span class="rounded-full border border-white/10 bg-black/60 px-3 py-1 text-xs font-mono text-slate-200">Scan 7s</span>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+
+      <footer class="px-4 pb-6 sm:px-8">
+        <div class="mx-auto max-w-4xl text-xs text-slate-500">
+          Feito para diversão. Não é detector de verdade de verdade.
+        </div>
+      </footer>
+    </div>
+
+    <script>
+      // --------------------------
+      // PWA "single-file": manifest via Blob; service worker tenta registrar (pode variar por navegador).
+      // --------------------------
+      (function setupPWA() {
+        const manifest = {
+          name: "Detector de Verdades Robótico",
+          short_name: "Detector",
+          start_url: ".",
+          display: "standalone",
+          background_color: "#000000",
+          theme_color: "#00ffcc",
+          description: "Simulador de Detector de Verdades para crianças",
+          icons: [
+            {
+              src:
+                "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Cdefs%3E%3CradialGradient id='g' cx='50%25' cy='35%25'%3E%3Cstop offset='0%25' stop-color='%2300ffcc'/%3E%3Cstop offset='100%25' stop-color='%23001512'/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect width='192' height='192' rx='36' fill='url(%23g)'/%3E%3Cpath d='M48 108c0-24 18-45 48-45s48 21 48 45' fill='none' stroke='%2339ff14' stroke-width='14' stroke-linecap='round'/%3E%3Ccircle cx='78' cy='90' r='9' fill='%23000'/%3E%3Ccircle cx='114' cy='90' r='9' fill='%23000'/%3E%3Cpath d='M70 128h52' stroke='%2300ffcc' stroke-width='12' stroke-linecap='round'/%3E%3C/svg%3E",
+              sizes: "192x192",
+              type: "image/svg+xml",
+            },
+          ],
+        };
+
+        const manifestBlob = new Blob([JSON.stringify(manifest)], { type: "application/manifest+json" });
+        const manifestUrl = URL.createObjectURL(manifestBlob);
+        const manifestLink = document.getElementById("manifestLink");
+        manifestLink.href = manifestUrl;
+
+        // Service Worker (cache do próprio arquivo). Alguns navegadores podem recusar SW vindo de blob.
+        if ("serviceWorker" in navigator) {
+          const swCode = `
+            const CACHE = "detector-verdades-v1";
+            self.addEventListener("install", (event) => {
+              event.waitUntil((async () => {
+                const cache = await caches.open(CACHE);
+                // Tenta cachear a própria página
+                try { await cache.add(new Request(self.registration.scope, {cache: "reload"})); } catch (e) {}
+                self.skipWaiting();
+              })());
+            });
+            self.addEventListener("activate", (event) => {
+              event.waitUntil((async () => {
+                const keys = await caches.keys();
+                await Promise.all(keys.map((k) => (k === CACHE ? null : caches.delete(k))));
+                self.clients.claim();
+              })());
+            });
+            self.addEventListener("fetch", (event) => {
+              event.respondWith((async () => {
+                const cached = await caches.match(event.request, { ignoreSearch: true });
+                if (cached) return cached;
+                try {
+                  const fresh = await fetch(event.request);
+                  const cache = await caches.open(CACHE);
+                  cache.put(event.request, fresh.clone());
+                  return fresh;
+                } catch (e) {
+                  return cached || new Response("Offline", { status: 200, headers: { "Content-Type": "text/plain; charset=utf-8" }});
+                }
+              })());
+            });
+          `;
+          try {
+            const swBlob = new Blob([swCode], { type: "text/javascript" });
+            const swUrl = URL.createObjectURL(swBlob);
+            navigator.serviceWorker.register(swUrl).catch(() => {});
+          } catch (_) {}
+        }
+      })();
+
+      // --------------------------
+      // UI / Estado
+      // --------------------------
+      const $ = (id) => document.getElementById(id);
+      const scanBtn = $("scanBtn");
+      const reScanBtn = $("reScanBtn");
+      const resetBtn = $("resetBtn");
+      const scanner = $("scanner");
+      const statusText = $("statusText");
+      const displayMain = $("displayMain");
+      const displaySub = $("displaySub");
+      const timeBox = $("timeBox");
+      const signalBox = $("signalBox");
+      const logEl = $("log");
+
+      let scanning = false;
+      let abortScan = null;
+      let lastSide = "right";
+      let lastResultText = "";
+
+      const scanPhrases = [
+        "Analisando DNA...",
+        "Checando batimentos...",
+        "Calculando nível de chulé...",
+        "Conferindo histórico de caretas...",
+        "Medindo coragem pra dizer a verdade...",
+        "Escaneando bolsos por balinhas...",
+        "Rodando teste anti-migué...",
+        "Checando sinais de risadinha suspeita...",
+        "Procurando provas no olhar...",
+        "Ajustando antenas do robô...",
+      ];
+
+      const bancoDeZoeiras = [
+        // ==========================================
+        // 1. ESCATOLOGIA, PEIDOS E BANHEIRO (1 a 50)
+        // ==========================================
+        "Alerta: Soltou um peido silencioso que derreteu o esmalte da unha do dedão!",
+        "Cuidado: Soltou uma bomba gasosa na sala e colocou a culpa na cadeira.",
+        "Detectado: Fez xixi na cama e tentou secar o colchão com o secador de cabelo.",
+        "Verificado: Ficou 20 minutos no banheiro jogando celular e fingindo que estava com dor de barriga.",
+        "Fato: Soltou um pum no carro com o vidro fechado e sorriu em segredo.",
+        "Alerta: Deixou um rastro de chulé capaz de nocautear um tiranossauro rex.",
+        "Detectado: Xixi na piscina identificado! A água mudou de cor ao seu redor.",
+        "Cuidado: Tem um pum preso na garganta prestes a sair na próxima frase.",
+        "Verificado: Esqueceu de dar descarga e deixou um 'monstro' flutuando no vaso.",
+        "Fato: Limpou o bumbum na toalha de rosto porque o papel higiênico acabou.",
+        "Alerta: Soltou um peido molhado e agora está andando com as pernas abertas.",
+        "Detectado: O sensor de gases detectou aroma de ovo podre vindo do seu bolso.",
+        "Cuidado: Tentou dar descarga em um boneco para ver se ele nadava.",
+        "Verificado: Fez xixi no banho e mirou direto no ralo para não fazer barulho.",
+        "Fato: Entupiu o vaso sanitário da casa da tia e saiu de fininho.",
+        "Alerta: Soltou um pum tão alto que o cachorro da vizinha começou a latir.",
+        "Detectado: Limpou o nariz na manga da camiseta e fingiu que era suor.",
+        "Cuidado: Usou meia furada no dedão para ventilar o chulé nível 9.",
+        "Verificado: Cuspiu da janela para ver se acertava em alguém lá embaixo.",
+        "Fato: Passou três dias sem trocar a cueca/calcinha e apenas mudou o lado.",
+        "Alerta: Deixou o banheiro cheirando a gambá azedo após o uso.",
+        "Detectado: Fez cocô na escola e usou meia folha de caderno para se limpar.",
+        "Cuidado: Limpou a boca suja de molho na cortina da sala de jantar.",
+        "Verificado: Soltou um pum na hora da oração ou do parabéns.",
+        "Fato: Ficou com a marca de vaso sanitário na coxa de tanto tempo no celular.",
+        "Alerta: O detector aponta acúmulo de gases explosivos no seu estômago.",
+        "Detectado: Tentou peidar baixinho na biblioteca e saiu um rojão.",
+        "Cuidado: Deixou a cueca/calcinha freada pendurada no box do banheiro.",
+        "Verificado: Limpou o ouvido com a tampa da caneta Bic e depois guardou.",
+        "Fato: Lavou as mãos apenas molhando as pontas dos dedos sem usar sabão.",
+        "Alerta: Entrou no mar só para fazer o número dois escondido.",
+        "Detectado: Usou o perfume do pai para disfarçar que não tomou banho.",
+        "Cuidado: Soltou um pum e correu para fora do quarto para o irmão cheirar.",
+        "Verificado: Misturou sabonete líquido com água para parecer que tinha muito.",
+        "Fato: Escondeu a meia suja e fedida atrás da almofada do sofá.",
+        "Alerta: O sensor detectou uma crosta de sujeira atrás da orelha esquerda.",
+        "Detectado: Deixou cair o chiclete no chão da calçada, soprou e guardou na boca.",
+        "Cuidado: Fez xixi no chão do banheiro porque ficou com preguiça de levantar o assento.",
+        "Verificado: Suou tanto no videogame que o controle está escorregando lambreca.",
+        "Fato: Usou o lençol limpo para limpar o suco que derramou na cama.",
+        "Alerta: Arrotou perto da cara do primo de propósito após tomar refrigerante.",
+        "Detectado: Tentou assoar o nariz no banho e jogou o projétil na parede.",
+        "Cuidado: Está segurando um pum desde o almoço e a pressão está subindo.",
+        "Verificado: Ficou com o dente sujo de feijão o dia inteiro e ninguém avisou.",
+        "Fato: Pegou a escova de dente do irmão emprestada sem ele saber.",
+        "Alerta: Esqueceu de passar desodorante e está exalando 'subaco de mamífero'.",
+        "Detectado: Entrou na piscina com areia no pé de propósito.",
+        "Cuidado: Tem uma marca de terra no pescoço que já virou patrimônio histórico.",
+        "Verificado: Guardou o lenço de papel usado no bolso para usar de novo depois.",
+        "Fato: Deixou o desinfetante cair no chão e fingiu que o cachorro que derramou.",
+
+        // ==========================================
+        // 2. MELECA, HÁBITOS NOJENTOS E CORPO (51 a 100)
+        // ==========================================
+        "Alerta: Limpou o nariz e colou a meleca embaixo da mesa do computador!",
+        "Cuidado: Fez uma bolinha de meleca e tentou acertar no gato.",
+        "Detectado: Comeu casquinha de ferida achando que era petisco.",
+        "Verificado: Tem tanta sujeira no umbigo que dá para plantar uma muda de alface.",
+        "Fato: Coçou o bumbum em público achando que ninguém estava olhando.",
+        "Alerta: Comeu a meleca do nariz para economizar papel toalha.",
+        "Detectado: Tem um exército de piolhos jogando futebol na sua cabeça agora.",
+        "Cuidado: Não corta a unha do pé há tanto tempo que já consegue subir em árvores.",
+        "Verificado: Coçou a frieira do pé e cheirou os dedos logo em seguida.",
+        "Fato: Lamber o prato quando a mãe vira as costas foi confirmado pelo sensor.",
+        "Alerta: O sensor encontrou restos de comida de quarta-feira passada nos seus dentes.",
+        "Detectado: Bocejou sem tapar a boca e quase engoliu uma mosca varejeira.",
+        "Cuidado: Tem uma linha de sujeira preta embaixo de todas as unhas da mão.",
+        "Verificado: Dormiu de boca aberta e babou metade do travesseiro.",
+        "Fato: Sujou os dedos de Cheetos e limpou na própria calça jeans nova.",
+        "Alerta: Usou o dedo mindinho para limpar o canal do ouvido e examinou o resultado.",
+        "Detectado: Está com remela no olho esquerdo desde a hora que acordou.",
+        "Cuidado: Soltou uma gota de saliva na tela do celular enquanto falava alto.",
+        "Verificado: Bebeu o resto do refrigerante choco que estava na mesa desde ontem.",
+        "Fato: Cuspiu para cima para tentar pegar com a boca e errou feio.",
+        "Alerta: O sensor acusa que seu hálito matinal é capaz de quebrar vidros.",
+        "Detectado: Arrancou um pelo do nariz e chorou de dor escondido no quarto.",
+        "Cuidado: Passou a mão suja de graxa de bicicleta no rosto para parecer guerreiro.",
+        "Verificado: Comeu areia da praia para testar se tinha gosto de sal.",
+        "Fato: Ficou caçando formiga no chão para ver se elas mordiam a língua.",
+        "Alerta: Tem uma marca de baba seca na bochecha direita agora.",
+        "Detectado: Coçou a cabeça com tanta força que nevou caspa na mesa.",
+        "Cuidado: Limpou a sujeira do olho e passou na calça do primo mais novo.",
+        "Verificado: Entrou na lama com o tênis novo só para ver o barulho que fazia.",
+        "Fato: Lambeu o corrimão do shopping para ver se tinha gosto de ferro.",
+        "Alerta: O detector encontrou uma coleção de chicletes mastigados embaixo da sua cama.",
+        "Detectado: Deixou o picolé derreter na mão inteira e limpou no cachorro.",
+        "Cuidado: Está com um pedaço de alface gigante colado no dente da frente.",
+        "Verificado: Bebeu água da mangueira do quintal que estava cheia de lodo.",
+        "Fato: Comeu papel de bala só porque estava com preguiça de levantar e jogar no lixo.",
+        "Alerta: O sensor indica que você não lava o dedinho do pé há três banhos.",
+        "Detectado: Engoliu um chiclete inteiro com medo de que a mãe descobrisse.",
+        "Cuidado: Tentou estalar os dedos e acabou soltando um pum sem querer.",
+        "Verificado: Limpou o suor da testa e passou no braço do amigo.",
+        "Fato: Dormiu no sofá e acordou com a cara colada no braço estofado.",
+        "Alerta: Tem uma mancha de chocolate na camiseta que na verdade é barro.",
+        "Detectado: Chupou o dedo sujo de terra após jogar bola no quintal.",
+        "Cuidado: Tentou lamber o próprio cotovelo e passou vergonha tentando.",
+        "Verificado: Esfregou o olho com força até ver estrelas coloridas no escuro.",
+        "Fato: Deixou cair a colher no chão do restaurante e guardou na boca rápido.",
+        "Alerta: O detector encontrou fios de cabelo alheios presos no seu relógio.",
+        "Detectado: Passou a língua no espelho do banheiro para ver se estava limpo.",
+        "Cuidado: Está com a meia molhada dentro do tênis gerando uma nova forma de vida.",
+        "Verificado: Tirou a casca do machucado antes do tempo e ficou sangrando.",
+        "Fato: Lambeu a tampa do iogurte alheio na geladeira e guardou de volta.",
+
+        // ==========================================
+        // 3. CRIMES ALIMENTARES E SABOTAGENS (101 a 150)
+        // ==========================================
+        "Cuidado: Comeu todo o recheio dos biscoitos e guardou as tampas secas no pacote.",
+        "Fato: Bebeu refrigerante direto da garrafa de 2 litros e deixou uma babinha boiando.",
+        "Alerta: Deixou o pote de sorvete no congelador apenas com uma colherada raspada.",
+        "Detectado: Comeu o último pedaço de bolo de chocolate e colocou a culpa no gato.",
+        "Verificado: Pegou o chocolate da dispensa escondido e enterrou a embalagem no vaso de planta.",
+        "Cuidado: Tomou o suco de caixinha do irmão usando o canudo dele escondido.",
+        "Fato: Pegou a maior fatia de pizza mesmo sabendo que era a vez do primo.",
+        "Alerta: Deixou a casca da banana em cima do micro-ondas para alguém recolher.",
+        "Detectado: Mordeu três coxinha diferentes para testar qual tinha mais catupiry.",
+        "Verificado: Abriu o pacote de salgadinho pelo lado errado e derramou metade no chão.",
+        "Cuidado: Bebeu leite direto do gargalo e limpou a boca com as costas da mão.",
+        "Fato: Guardou um pedaço de pizza embaixo da cama para comer mais tarde.",
+        "Alerta: Misturou ketchup, maionese e refrigerante no copo para fazer poção mágica.",
+        "Detectado: Comeu o doce que era para a festa de aniversário antes dos parabéns.",
+        "Verificado: Roubou o morango do topo do bolo antes da mãe terminar de confeitar.",
+        "Cuidado: Colocou açúcar no saleiro para ver a confusão na hora do almoço.",
+        "Fato: Escondeu as verduras embaixo do bife para fingir que comeu tudo.",
+        "Alerta: Jogou o jiló no lixo do banheiro para a mãe não ver no prato.",
+        "Detectado: Lambeu o doce da colher de servir antes de colocar de volta na travessa.",
+        "Verificado: Comeu o brigadeiro gigante que estava guardado para a visita.",
+        "Cuidado: Bebeu a calda do pudim direto da forma e deixou o resto seco.",
+        "Fato: Pegou o danoninho do irmão mais novo e disse que tinha vencido.",
+        "Alerta: Derrubou o pão com manteiga no chão virado para baixo e comeu assim mesmo.",
+        "Detectado: Misturou feijão no pote de sorvete para assustar quem abrisse a geladeira.",
+        "Verificado: Comeu a bordinha da pizza de todo mundo e deixou o meio.",
+        "Cuidado: Colocou gelo no refrigerante para render mais e deixou o copo aguado na mesa.",
+        "Fato: Roubou batata frita do prato do pai enquanto ele foi ao banheiro.",
+        "Alerta: Mastigou de boca aberta fazendo barulho de britadeira que irritou a tia.",
+        "Detectado: Guardou o chiclete no canto do prato durante o almoço para continuar depois.",
+        "Verificado: Tomou achocolatado e ficou com o bigode marrom sem limpar por duas horas.",
+        "Cuidado: Deixou a colher suja de Nutella secar em cima da pia de mármore.",
+        "Fato: Abriu o pote de requijão novo e pegou só o meio com o dedo.",
+        "Alerta: Escondeu o resto do almoço no pote de ração do cachorro.",
+        "Detectado: Comeu o bolo quente escondido e ficou com dor de barriga instantânea.",
+        "Verificado: Tomou refrigerante escondido de madrugada e quase engasgou com o gás.",
+        "Cuidado: Jogou o farelo do biscoito de polvilho embaixo do tapete da sala.",
+        "Fato: Mordeu o chocolate da mãe, tentou cobrir a marca com o dedo e guardou.",
+        "Alerta: Bebeu a água do coco e deixou a casca vazia no meio da sala.",
+        "Detectado: Lambeu o salgadinho antes de passar no patê coletivo.",
+        "Verificado: Colocou o dobro de leite condensado no copo e escondeu a lata vazia.",
+        "Cuidado: Pegou o último pão de queijo da bandeja sem perguntar se alguém queria.",
+        "Fato: Comeu a cobertura de chantilly do bolo com o dedo e tentou alisar depois.",
+        "Alerta: Deixou cair pipoca dentro do sofá e empurrou com o pé para o fundo.",
+        "Detectado: Bebeu suco de limão puro achando que era limonada suíça e chorou.",
+        "Verificado: Colocou nesquik no leite gelado e não mexeu, comeu a crosta de cima.",
+        "Cuidado: Escondeu o pedaço de cebola na borda do prato para o pai não brigar.",
+        "Fato: Deixou a caneca de leite com achocolatado três dias no quarto até criar mofo.",
+        "Alerta: Comeu uva direto do cacho no supermercado antes de pagar.",
+        "Detectado: Pegou o pirulito do primo enquanto ele estava no banheiro.",
+        "Verificado: Deixou a colher com baba dentro do pote de açúcar.",
+
+        // ==========================================
+        // 4. PREGUIÇA, COMPORTAMENTO E BIRRA (151 a 200)
+        // ==========================================
+        "Alerta: Fingiu que estava dormindo no carro para o pai carregar no colo até o quarto.",
+        "Cuidado: Chorou sem nenhuma lágrima no olho só para ganhar o brinquedo novo.",
+        "Detectado: Escondeu o brinquedo do primo embaixo da cama para ele não achar.",
+        "Verificado: Fingiu dor de cabeça crônica para faltar na aula de matemática.",
+        "Fato: Pegou o controle da TV, sentou em cima e disse que não sabia onde estava.",
+        "Alerta: Fingiu que não estava ouvindo a mãe chamar para não ter que guardar os sapatos.",
+        "Detectado: Deixou os brinquedos espalhados no corredor de propósito para alguém tropeçar.",
+        "Verificado: Guardou a roupa suja dentro do guarda-roupa misturada com as limpas.",
+        "Cuidado: Bateu o pé no chão e fez bico porque o desenho animado acabou.",
+        "Fato: Chutou o brinquedo para baixo do armário em vez de guardar na caixa.",
+        "Alerta: Fingiu que estava estudando e mudou a aba do computador correndo quando a mãe entrou.",
+        "Detectado: Colocou a culpa no irmão mais novo por algo que você fez com certeza.",
+        "Verificado: Disse que fez a lição de casa, mas na verdade copiou do grupo dos amigos.",
+        "Cuidado: Escondeu a meia suja dentro do tênis para não ter que levar para a lavanderia.",
+        "Fato: Apagou a luz do corredor e saiu correndo com medo do monstro pegar o calcanhar.",
+        "Alerta: Demorou 40 minutos para calçar um par de tênis só por pura preguiça.",
+        "Detectado: Pediu para ir ao banheiro na aula só para ficar passeando no corredor.",
+        "Verificado: Respondeu a mãe com 'já vou' dez vezes seguidas sem sair do lugar.",
+        "Cuidado: Escondeu o casaco novo no fundo da mochila para não ter que usar.",
+        "Fato: Fez birra no mercado porque queria o salgadinho que vinha com brinde.",
+        "Alerta: Empurrou a sujeira do quarto para debaixo da cama em vez de usar a pá.",
+        "Detectado: Desligou o Wi-Fi da casa de propósito porque o irmão não queria sair do PC.",
+        "Verificado: Fingiu que estava lendo o livro da escola, mas estava pensando em coxinha.",
+        "Cuidado: Escondeu o chinelo do pai para ele não sair de casa e te deixar sozinho.",
+        "Fato: Fez cara de choro para a avó para conseguir o dinheiro do sorvete.",
+        "Alerta: Bagunçou a cama que a mãe tinha acabado de arrumar só para deitar no chão.",
+        "Detectado: Deixou a mochila escolar no meio da porta da cozinha para todo mundo chutar.",
+        "Verificado: Falou que o dever de casa era para fazer em dupla, mas fez sozinho no chat.",
+        "Cuidado: Fingiu que a garganta estava inflamada fazendo voz rouca falsa.",
+        "Fato: Escondeu o controle do videogame do primo para ele perder a partida.",
+        "Alerta: Deixou a toalha molhada em cima da cama estofada de casal.",
+        "Detectado: Jogou o casaco no chão do closet em vez de pendurar no cabide.",
+        "Verificado: Ficou de cara amarrada no almoço de domingo porque queria ir ao shopping.",
+        "Cuidado: Disse que perdeu o lápis de cor só porque ficou com preguiça de apontar.",
+        "Fato: Fingiu que a bateria do celular acabou para não responder o grupo da família.",
+        "Alerta: Fez o trabalho de arte colando tudo torto com cola branca em excesso.",
+        "Detectado: Chutou a bola na janela do vizinho e correu para dentro de casa.",
+        "Verificado: Reclamou que a comida estava quente demais só para ganhar tempo no celular.",
+        "Cuidado: Deixou os sapatos na sala para a mãe tropeçar quando chegar do trabalho.",
+        "Fato: Entrou no quarto com o pé sujo de terra logo após a faxina.",
+        "Alerta: Escondeu a escova de cabelo para não ter que pentear os nós do cabelo.",
+        "Detectado: Ficou enrolando para tomar banho até a água da casa inteira esfriar.",
+        "Verificado: Disse que o professor não passou matéria nova porque ele faltou.",
+        "Cuidado: Mudou o canal da TV bem na hora do gol do pai só de sacanagem.",
+        "Fato: Guardou o prato sujo no armário de pratos limpos para não lavar.",
+        "Alerta: Ficou de pijama o sábado inteiro sem pentear o cabelo nenhuma vez.",
+        "Detectado: Escondeu a chave do portão para ninguém sair de casa antes de você acabar o jogo.",
+        "Verificado: Chorou porque o primo pegou o personagem azul no jogo.",
+        "Cuidado: Fingiu que quebrou o braço colando uma faixa falsa de papel higiênico.",
+        "Fato: Jogou a casca do ovo cozido no vaso de planta da sala.",
+
+        // ==========================================
+        // 5. VIDEOGAME, ESCOLA E GAFES (201 a 250)
+        // ==========================================
+        "Alerta: Perdeu a paciência no jogo do celular e colocou a culpa na internet.",
+        "Cuidado: Gastou toda a bateria do celular do pai jogando Roblox escondido.",
+        "Detectado: Escondeu a prova com nota vermelha atrás do guarda-roupa da tia.",
+        "Verificado: Misturou todas as massinhas de modelar até virar uma bola cinza feia.",
+        "Fato: Esqueceu o estojo na escola e usou o lápis que achou no chão do corredor.",
+        "Alerta: Entrou na conta da Netflix de todo mundo e mudou o idioma para japonês.",
+        "Detectado: Passou cola bastão na mão inteira só para puxar a película depois.",
+        "Verificado: Copiou o desenho do amigo e assinou seu nome embaixo na aula de artes.",
+        "Cuidado: Perdeu o apontador dentro da própria mochila e acusou o amigo de roubo.",
+        "Fato: Errou o caminho da própria casa voltando da padaria e ficou perdido no quarteirão.",
+        "Alerta: Deixou o boneco favorito cair dentro da poça de lama e disse que ele foi resgatado.",
+        "Detectado: Tentou cortar o próprio cabelo com a tesoura sem ponta da escola e ficou torto.",
+        "Verificado: Falou alto na aula achando que o professor estava com o microfone ligado.",
+        "Cuidado: Derrubou o estojo de ferro no chão durante o silêncio da prova.",
+        "Fato: Chamou a professora de 'mãe' e todo mundo na sala começou a rir.",
+        "Alerta: O sensor indica que você gastou seus Robux em uma skin horrorosa.",
+        "Detectado: Esqueceu o lanche na mochila desde sexta-feira e agora tem uma floresta lá dentro.",
+        "Verificado: Tentou fazer manobra com a bicicleta e caiu de bunda na grama.",
+        "Cuidado: Colocou a camiseta do avesso com a etiqueta para a frente e não percebeu.",
+        "Fato: Perdeu o chinelo jogando bola na rua e ele foi parar no bueiro.",
+        "Alerta: Tentou dar um mortal no sofá e quebrou o abajur de porcelana da sala.",
+        "Detectado: Ficou preso dentro do balanço do parquinho porque o bumbum não passava.",
+        "Verificado: Rasgou a calça pulando o portãozinho da casa da avó.",
+        "Cuidado: Levou um tombo clássico correndo atrás do caminhão de sorvete.",
+        "Fato: Fingiu que sabia falar inglês inventando palavras que terminavam com 'ation'.",
+        "Alerta: Passou o dia inteiro jogando com o controle do videogame desligado achando que estava vencendo.",
+        "Detectado: Chutou o vento tentando acertar a bola de futebol e caiu sozinho.",
+        "Verificado: Esqueceu o nome do melhor amigo na hora de apresentar o trabalho.",
+        "Cuidado: Abriu a mochila e o caderno caiu direto dentro de uma poça de água.",
+        "Fato: Colocou a culpa no corretor ortográfico por ter escrito uma palavra totalmente errada.",
+        "Alerta: Tentou assobiar e só saiu cuspe na cara do primo da frente.",
+        "Detectado: Entrou no banheiro feminino/masculino por engano e saiu correndo vermelho.",
+        "Verificado: Caiu da rede de descanso porque tentou girar 360 graus nela."
+      ];
+
+      function addLog(msg, tone = "normal") {
+        const div = document.createElement("div");
+        const base = "rounded-lg border bg-black/40 px-3 py-2";
+        const cls =
+          tone === "good"
+            ? "border-neon-green/20 text-neon-green"
+            : tone === "warn"
+              ? "border-amber-400/20 text-amber-200"
+              : "border-neon-cyan/15 text-slate-200";
+        div.className = `${base} ${cls}`;
+        const t = new Date();
+        const hh = String(t.getHours()).padStart(2, "0");
+        const mm = String(t.getMinutes()).padStart(2, "0");
+        const ss = String(t.getSeconds()).padStart(2, "0");
+        div.textContent = `[${hh}:${mm}:${ss}] ${msg}`;
+        logEl.prepend(div);
+      }
+
+      function setStatus(text, color = "green") {
+        statusText.textContent = text;
+        statusText.className = color === "cyan" ? "text-neon-cyan" : color === "amber" ? "text-amber-300" : "text-neon-green";
+      }
+
+      function setDisplay(main, sub = "") {
+        displayMain.textContent = main;
+        displaySub.textContent = sub;
+      }
+
+      function setScanningUI(on) {
+        scanner.classList.toggle("scanning", on);
+        scanBtn.disabled = on;
+        scanBtn.classList.toggle("opacity-60", on);
+        scanBtn.classList.toggle("cursor-not-allowed", on);
+        signalBox.textContent = on ? "SCAN" : "OK";
+        signalBox.className = on ? "mt-1 font-mono text-3xl text-amber-300" : "mt-1 font-mono text-3xl text-neon-green";
+      }
+
+      // --------------------------
+      // Web Audio: bipes robóticos retrô (sine + sawtooth)
+      // --------------------------
+      let audioCtx = null;
+      function getAudio() {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        return audioCtx;
+      }
+
+      function beep({ type = "sine", freq = 440, dur = 0.08, when = 0, gain = 0.07 } = {}) {
+        const ctx = getAudio();
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = type;
+        o.frequency.setValueAtTime(freq, ctx.currentTime + when);
+        g.gain.setValueAtTime(0.0001, ctx.currentTime + when);
+        g.gain.exponentialRampToValueAtTime(gain, ctx.currentTime + when + 0.01);
+        g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + when + dur);
+        o.connect(g);
+        g.connect(ctx.destination);
+        o.start(ctx.currentTime + when);
+        o.stop(ctx.currentTime + when + dur + 0.02);
+      }
+
+      function robotChirp(when = 0) {
+        // Pequeno "piu-ziu" robótico
+        beep({ type: "sawtooth", freq: 220, dur: 0.07, when, gain: 0.05 });
+        beep({ type: "sine", freq: 660, dur: 0.06, when: when + 0.08, gain: 0.06 });
+        beep({ type: "sawtooth", freq: 330, dur: 0.08, when: when + 0.16, gain: 0.045 });
+      }
+
+      function scheduleScanBeeps(totalSeconds = 7) {
+        const ctx = getAudio();
+        const startAt = ctx.currentTime + 0.02;
+
+        // "Boot" curto
+        robotChirp(0.02);
+
+        // Bipes periódicos durante o scan (misturando sine e sawtooth)
+        const steps = Math.floor(totalSeconds / 0.18);
+        for (let i = 0; i < steps; i++) {
+          const t = 0.28 + i * 0.18;
+          const f1 = 320 + (i % 7) * 35 + (Math.random() * 12 - 6);
+          const f2 = 700 + (i % 5) * 60 + (Math.random() * 20 - 10);
+          beep({ type: i % 2 === 0 ? "sine" : "sawtooth", freq: f1, dur: 0.06, when: t, gain: 0.045 });
+          if (i % 3 === 0) beep({ type: "sine", freq: f2, dur: 0.04, when: t + 0.07, gain: 0.035 });
+        }
+
+        // "Fim do scan"
+        beep({ type: "sawtooth", freq: 160, dur: 0.08, when: totalSeconds - 0.25, gain: 0.05 });
+        beep({ type: "sine", freq: 880, dur: 0.09, when: totalSeconds - 0.14, gain: 0.06 });
+
+        // Mantém o contexto acordado (alguns browsers suspendem)
+        ctx.resume?.().catch(() => {});
+        return startAt;
+      }
+
+      // --------------------------
+      // Scan logic (7s + frases rápidas)
+      // --------------------------
+      async function startScan(resultMode, fixedResult = null) {
+        if (scanning) return;
+        scanning = true;
+        abortScan = new AbortController();
+        const signal = abortScan.signal;
+
+        setScanningUI(true);
+        setStatus("Escaneando", "cyan");
+        addLog("Iniciando varredura...", "normal");
+        setDisplay("Iniciando scanner...", "Ativando lasers seguros.");
+
+        // Áudio: precisa de gesto do usuário (já houve clique/tap)
+        try {
+          scheduleScanBeeps(7);
+        } catch (_) {
+          addLog("Áudio bloqueado pelo navegador (toque novamente).", "warn");
+        }
+
+        const startedAt = performance.now();
+        const totalMs = 7000;
+        const phraseInterval = 170;
+
+        let phraseTimer = null;
+        let raf = null;
+
+        const stopTimers = () => {
+          if (phraseTimer) clearInterval(phraseTimer);
+          phraseTimer = null;
+          if (raf) cancelAnimationFrame(raf);
+          raf = null;
+        };
+
+        // Frases mudando rápido
+        phraseTimer = setInterval(() => {
+          const phrase = scanPhrases[Math.floor(Math.random() * scanPhrases.length)];
+          setDisplay(phrase, "Não se mexa (por 7 segundos)...");
+        }, phraseInterval);
+
+        // Timer regressivo com update suave
+        const tick = () => {
+          if (signal.aborted) return;
+          const elapsed = performance.now() - startedAt;
+          const remain = Math.max(0, totalMs - elapsed);
+          const sec = Math.ceil(remain / 1000);
+          timeBox.textContent = String(sec);
+          if (remain <= 0) return;
+          raf = requestAnimationFrame(tick);
+        };
+        tick();
+
+        // Aguarda 7s ou cancelamento
+        try {
+          await new Promise((resolve, reject) => {
+            const to = setTimeout(resolve, totalMs);
+            signal.addEventListener(
+              "abort",
+              () => {
+                clearTimeout(to);
+                reject(new Error("aborted"));
+              },
+              { once: true }
+            );
+          });
+        } catch (_) {
+          stopTimers();
+          scanning = false;
+          setScanningUI(false);
+          setStatus("Pronto", "green");
+          timeBox.textContent = "--";
+          setDisplay("Scan cancelado.", "Aperte Escanear novamente.");
+          addLog("Varredura cancelada.", "warn");
+          return;
+        }
+
+        stopTimers();
+
+        const result = fixedResult ?? bancoDeZoeiras[Math.floor(Math.random() * bancoDeZoeiras.length)];
+
+        scanning = false;
+        setScanningUI(false);
+        setStatus("Resultado", "green");
+        timeBox.textContent = "0";
+        lastResultText = result;
+
+        setDisplay("DIAGNÓSTICO:", result);
+        addLog(`DIAGNÓSTICO: ${result}`, "warn");
+      }
+
+      function resetAll() {
+        if (abortScan) abortScan.abort();
+        scanning = false;
+        abortScan = null;
+        setScanningUI(false);
+        setStatus("Pronto", "green");
+        timeBox.textContent = "--";
+        setDisplay("Encoste o dedo e aperte Escanear", "Sem garantias científicas.");
+        addLog("Reset realizado.", "normal");
+      }
+
+      // Segredo: clique/tap do lado esquerdo ou direito do botão
+      function decideSideFromPointerEvent(ev) {
+        const rect = scanBtn.getBoundingClientRect();
+        const x = (ev.clientX ?? (ev.touches && ev.touches[0]?.clientX) ?? rect.left + rect.width / 2) - rect.left;
+        lastSide = x < rect.width / 2 ? "left" : "right";
+        return lastSide;
+      }
+
+      scanBtn.addEventListener("pointerdown", (ev) => {
+        decideSideFromPointerEvent(ev);
+      });
+
+      scanBtn.addEventListener("click", async (ev) => {
+        // Garante que o áudio pode tocar (resumo do contexto por gesto)
+        try { await getAudio().resume(); } catch (_) {}
+        // Fallback: se por algum motivo o pointerdown não registrou, decide pelo clique
+        decideSideFromPointerEvent(ev);
+        startScan("scan");
+      });
+
+      reScanBtn.addEventListener("click", async () => {
+        if (scanning) return;
+        if (!lastResultText) {
+          addLog("Ainda não existe diagnóstico anterior para repetir.", "warn");
+          setDisplay("Sem diagnóstico anterior.", "Faça um escaneamento primeiro.");
+          return;
+        }
+        try { await getAudio().resume(); } catch (_) {}
+        addLog("Repetindo varredura (modo AUX)...", "normal");
+        // Repete o scan, mas mantém o diagnóstico anterior
+        startScan("repeat", lastResultText);
+      });
+
+      resetBtn.addEventListener("click", resetAll);
+
+      // --------------------------
+      // Instalação (quando disponível)
+      // --------------------------
+      const installBtn = $("installBtn");
+      let deferredPrompt = null;
+      window.addEventListener("beforeinstallprompt", (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        installBtn.classList.remove("hidden");
+      });
+      installBtn.addEventListener("click", async () => {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        try { await deferredPrompt.userChoice; } catch (_) {}
+        deferredPrompt = null;
+        installBtn.classList.add("hidden");
+      });
+
+      // Boot log
+      addLog("Sistema online. Pronto para escanear.", "good");
+    </script>
+  </body>
+</html>
