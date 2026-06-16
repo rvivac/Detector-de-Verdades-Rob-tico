@@ -35,18 +35,19 @@
 
     <style>
       :root {
-        --grid: rgba(0, 255, 204, 0.06);
-        --glow: rgba(0, 255, 204, 0.38);
+        --grid: rgba(255, 255, 255, 0.08);
+        --glow: rgba(34, 211, 238, 0.28);
       }
 
-      /* Fundo cyberpunk com grade sutil */
+      /* Fundo mais alegre e colorido */
       .bg-grid {
         background-image:
           linear-gradient(var(--grid) 1px, transparent 1px),
           linear-gradient(90deg, var(--grid) 1px, transparent 1px),
-          radial-gradient(circle at 20% 10%, rgba(57, 255, 20, 0.11), transparent 45%),
-          radial-gradient(circle at 80% 30%, rgba(0, 255, 204, 0.10), transparent 40%),
-          radial-gradient(circle at 50% 95%, rgba(0, 255, 204, 0.08), transparent 55%);
+          radial-gradient(circle at 15% 10%, rgba(244, 114, 182, 0.26), transparent 34%),
+          radial-gradient(circle at 85% 18%, rgba(34, 211, 238, 0.22), transparent 30%),
+          radial-gradient(circle at 50% 100%, rgba(250, 204, 21, 0.18), transparent 38%),
+          linear-gradient(180deg, #25104f 0%, #0f172a 48%, #111827 100%);
         background-size: 36px 36px, 36px 36px, auto, auto, auto;
         background-position: 0 0, 0 0, center, center, center;
       }
@@ -54,6 +55,121 @@
       .scan-frame {
         position: relative;
         overflow: hidden;
+        background:
+          radial-gradient(circle at 50% 0%, rgba(250, 204, 21, 0.18), transparent 38%),
+          radial-gradient(circle at 90% 10%, rgba(244, 114, 182, 0.12), transparent 30%),
+          linear-gradient(180deg, rgba(49, 15, 92, 0.92), rgba(15, 23, 42, 0.84));
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.07),
+          0 18px 60px rgba(35, 12, 74, 0.35);
+      }
+
+      .panel-shell {
+        position: relative;
+        overflow: hidden;
+        background:
+          linear-gradient(180deg, rgba(76, 29, 149, 0.92), rgba(30, 41, 59, 0.84)),
+          rgba(0, 0, 0, 0.55);
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.06),
+          0 20px 50px rgba(37, 17, 74, 0.30);
+        backdrop-filter: blur(14px);
+      }
+
+      .panel-shell::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.06), transparent 24%, transparent 70%, rgba(250, 204, 21, 0.08));
+      }
+
+      .hero-frame {
+        position: relative;
+        overflow: hidden;
+        background:
+          radial-gradient(circle at top left, rgba(250, 204, 21, 0.22), transparent 24%),
+          radial-gradient(circle at top right, rgba(34, 211, 238, 0.18), transparent 26%),
+          radial-gradient(circle at bottom right, rgba(244, 114, 182, 0.16), transparent 30%),
+          linear-gradient(180deg, rgba(88, 28, 135, 0.92), rgba(30, 41, 59, 0.82));
+        box-shadow:
+          inset 0 1px 0 rgba(255,255,255,0.08),
+          0 24px 60px rgba(45, 18, 87, 0.34);
+      }
+
+      .hero-logo {
+        width: 72px;
+        height: 72px;
+        border-radius: 24px;
+        border: 2px solid rgba(255, 255, 255, 0.14);
+        box-shadow: 0 0 28px rgba(250, 204, 21, 0.18);
+      }
+
+      .status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.45rem 0.8rem;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        background: rgba(255, 255, 255, 0.10);
+      }
+
+      .status-pill-dot {
+        width: 0.55rem;
+        height: 0.55rem;
+        border-radius: 999px;
+        background: #facc15;
+        box-shadow: 0 0 12px rgba(250, 204, 21, 0.65);
+      }
+
+      .section-label {
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+      }
+
+      .info-card {
+        position: relative;
+        overflow: hidden;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.06));
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.10);
+      }
+
+      .info-card::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: linear-gradient(135deg, rgba(255,255,255,0.10), transparent 45%);
+      }
+
+      .control-btn {
+        box-shadow:
+          inset 0 1px 0 rgba(255,255,255,0.10),
+          0 12px 24px rgba(45, 18, 87, 0.22);
+        transition:
+          transform 160ms ease,
+          box-shadow 160ms ease,
+          border-color 160ms ease,
+          background 160ms ease;
+      }
+
+      .control-btn:hover {
+        transform: translateY(-1px);
+      }
+
+      .chip-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+
+      .mode-chip {
+        border-radius: 999px;
+        padding: 0.45rem 0.8rem;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.06));
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
       }
 
       /* Linhas horizontais animadas (efeito laser) */
@@ -156,19 +272,19 @@
         overflow: hidden;
         min-height: 180px;
         background:
-          radial-gradient(circle at 50% 20%, rgba(0, 255, 204, 0.14), transparent 45%),
-          linear-gradient(180deg, rgba(2, 6, 23, 0.92), rgba(0, 0, 0, 0.94));
+          radial-gradient(circle at 50% 20%, rgba(34, 211, 238, 0.18), transparent 45%),
+          radial-gradient(circle at 90% 12%, rgba(250, 204, 21, 0.14), transparent 28%),
+          linear-gradient(180deg, rgba(59, 21, 109, 0.92), rgba(15, 23, 42, 0.94));
       }
 
       .camera-shell[data-state="ready"] {
-        box-shadow: 0 0 20px rgba(57, 255, 20, 0.22);
+        box-shadow: 0 0 20px rgba(250, 204, 21, 0.28);
       }
 
       .camera-video {
         width: 100%;
         height: 100%;
         object-fit: cover;
-        transform: scaleX(-1);
         filter: contrast(1.08) saturate(1.05) brightness(0.9);
       }
     </style>
@@ -182,46 +298,61 @@
     <div class="min-h-dvh flex flex-col">
       <header class="px-4 pt-6 pb-4 sm:px-8">
         <div class="mx-auto max-w-4xl">
-          <div class="flex items-start justify-between gap-4">
-            <div>
-              <div class="inline-flex items-center gap-2">
-                <span class="h-2.5 w-2.5 rounded-full bg-neon-cyan shadow-[0_0_14px_rgba(0,255,204,.65)]"></span>
-                <span class="h-2.5 w-2.5 rounded-full bg-neon-green shadow-[0_0_14px_rgba(57,255,20,.55)]"></span>
-                <span class="h-2.5 w-2.5 rounded-full bg-neon-cyan/40"></span>
+          <div class="hero-frame rounded-[28px] border border-neon-cyan/15 px-4 py-4 sm:px-6 sm:py-5">
+            <div class="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+              <div class="flex items-start gap-4">
+                <img src="./logo.png" alt="Logo do Detector de Verdades Robótico" class="hero-logo shrink-0 object-cover" />
+                <div>
+                  <div class="inline-flex items-center gap-2">
+                    <span class="h-2.5 w-2.5 rounded-full bg-neon-cyan shadow-[0_0_14px_rgba(0,255,204,.65)]"></span>
+                    <span class="h-2.5 w-2.5 rounded-full bg-neon-green shadow-[0_0_14px_rgba(57,255,20,.55)]"></span>
+                    <span class="h-2.5 w-2.5 rounded-full bg-neon-cyan/40"></span>
+                    <span class="section-label text-[10px] font-mono text-slate-200/80">Brincadeira Superdivertida</span>
+                  </div>
+                  <h1 class="mt-3 text-2xl font-mono tracking-tight text-white sm:text-4xl">
+                    Detector de Verdades Robótico
+                  </h1>
+                  <p class="mt-2 max-w-2xl text-sm text-slate-300 sm:text-base">
+                    Um jogo divertido com robô, câmera e mensagens engraçadas para deixar a brincadeira ainda mais animada.
+                  </p>
+                </div>
               </div>
-              <h1 class="mt-3 text-2xl sm:text-3xl font-mono tracking-tight">
-                Detector de Verdades Robótico
-              </h1>
-              <p class="mt-1 text-sm sm:text-base text-slate-300">
-                Um scanner sci-fi que decide a verdade com tecnologia super-secreta.
-              </p>
-            </div>
 
-            <button
-              id="installBtn"
-              class="hidden shrink-0 rounded-xl border border-neon-cyan/30 bg-black/40 px-3 py-2 text-sm font-mono text-neon-cyan hover:bg-black/55 focus:outline-none focus:ring-2 focus:ring-neon-cyan/40"
-              type="button"
-              title="Instalar como app"
-            >
-              Instalar
-            </button>
+              <div class="flex flex-col items-start gap-3 sm:items-end">
+                <div class="status-pill">
+                  <span class="status-pill-dot"></span>
+                  <span class="text-xs font-mono text-slate-100">Robô acordado</span>
+                </div>
+                <button
+                  id="installBtn"
+                  class="control-btn hidden shrink-0 rounded-xl border border-neon-cyan/30 bg-black/40 px-4 py-2 text-sm font-mono text-neon-cyan hover:bg-black/55 focus:outline-none focus:ring-2 focus:ring-neon-cyan/40"
+                  type="button"
+                  title="Instalar como app"
+                >
+                  Instalar App
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </header>
 
       <main class="flex-1 px-4 pb-10 sm:px-8">
-        <div class="mx-auto max-w-4xl grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div class="mx-auto max-w-4xl grid grid-cols-1 gap-5 lg:grid-cols-2">
           <!-- Scanner -->
-          <section class="rounded-2xl border border-neon-cyan/20 bg-black/40 shadow-glow">
+          <section class="panel-shell rounded-[28px] border border-neon-cyan/20 shadow-glow">
             <div class="p-4 sm:p-6">
               <div class="flex items-center justify-between gap-3">
-                <h2 class="font-mono text-lg text-neon-cyan">Módulo de Scanner</h2>
-                <div class="text-xs font-mono text-slate-300">
+                <div>
+                  <div class="section-label text-[11px] font-mono text-slate-300/70">Área da Brincadeira</div>
+                  <h2 class="mt-1 font-mono text-lg text-cyan-200">Módulo do Robô</h2>
+                </div>
+                <div class="rounded-full border border-white/10 bg-white/10 px-3 py-2 text-xs font-mono text-slate-100">
                   Status: <span id="statusText" class="text-neon-green">Pronto</span>
                 </div>
               </div>
 
-              <div class="mt-4 scan-frame rounded-2xl border border-neon-green/15 bg-gradient-to-b from-black/60 to-black/35">
+              <div class="mt-5 scan-frame rounded-[24px] border border-neon-green/15">
                 <div
                   id="scanner"
                   class="scan-lines relative h-[280px] sm:h-[340px] p-4 sm:p-6 scanning:outline-none"
@@ -237,9 +368,9 @@
                   <div class="relative h-full grid place-items-center">
                     <div class="text-center max-w-[28rem]">
                       <div class="text-xs font-mono tracking-widest text-slate-300">
-                        SCAN-ENGINE v3.1
+                        ROBOZINHO DA VERDADE
                       </div>
-                      <div class="mt-3 rounded-xl border border-neon-cyan/20 bg-black/60 p-4 crt">
+                      <div class="info-card mt-3 rounded-2xl border border-neon-cyan/20 p-4 crt">
                         <div id="displayMain" class="font-mono text-lg sm:text-xl text-neon-cyan">
                           Encoste o dedo e aperte Escanear
                         </div>
@@ -249,23 +380,23 @@
                       </div>
 
                       <div class="mt-4 flex items-center justify-center gap-2 text-xs font-mono text-slate-400">
-                        <span class="inline-block h-1.5 w-1.5 rounded-full bg-neon-green/70"></span>
-                        <span>LASER SAFE MODE: ON</span>
-                        <span class="inline-block h-1.5 w-1.5 rounded-full bg-neon-cyan/70"></span>
+                        <span class="inline-block h-1.5 w-1.5 rounded-full bg-yellow-300 shadow-[0_0_10px_rgba(250,204,21,.8)]"></span>
+                        <span>MODO BRINCADEIRA: LIGADO</span>
+                        <span class="inline-block h-1.5 w-1.5 rounded-full bg-pink-300 shadow-[0_0_10px_rgba(244,114,182,.8)]"></span>
                       </div>
 
-                      <div class="mt-4 rounded-xl border border-neon-cyan/20 bg-black/45 p-3 text-left">
-                        <div class="flex items-center justify-between gap-3">
+                      <div class="info-card mt-5 rounded-2xl border border-neon-cyan/20 p-3 text-left">
+                        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                           <div>
-                            <div class="text-xs font-mono tracking-widest text-slate-400">FACE SENSOR</div>
+                            <div class="text-xs font-mono tracking-widest text-slate-300">CÂMERA DO ROBÔ</div>
                             <div id="cameraStatusText" class="mt-1 text-sm font-mono text-amber-200">Câmera desligada</div>
                           </div>
                           <button
                             id="cameraBtn"
                             type="button"
-                            class="rounded-xl border border-neon-green/25 bg-neon-green/10 px-3 py-2 text-xs font-mono text-neon-green hover:bg-neon-green/15 focus:outline-none focus:ring-2 focus:ring-neon-green/25"
+                            class="control-btn rounded-xl border border-neon-green/25 bg-neon-green/10 px-4 py-2 text-xs font-mono text-neon-green hover:bg-neon-green/15 focus:outline-none focus:ring-2 focus:ring-neon-green/25"
                           >
-                            Ativar câmera
+                            Ativar câmera traseira
                           </button>
                         </div>
 
@@ -277,14 +408,14 @@
                           <video id="cameraPreview" class="camera-video hidden" autoplay playsinline muted></video>
                           <div class="absolute inset-0 border border-neon-cyan/15 pointer-events-none"></div>
                           <div class="absolute inset-x-4 top-4 flex items-center justify-between text-[11px] font-mono text-slate-300 pointer-events-none">
-                            <span>FRONTAL CAM</span>
+                            <span>CÂMERA</span>
                             <span id="cameraFrameText">Aguardando câmera</span>
                           </div>
                           <div id="cameraPlaceholder" class="absolute inset-0 grid place-items-center p-4 text-center">
                             <div>
-                              <div class="text-sm font-mono text-neon-cyan">Ative a câmera frontal</div>
+                              <div class="text-sm font-mono text-cyan-200">Ligue a câmera para começar</div>
                               <div class="mt-2 text-xs font-mono text-slate-400">
-                                O scanner só libera quando detectar um rosto próximo.
+                                O robô só brinca quando enxerga uma pessoa bem pertinho.
                               </div>
                             </div>
                           </div>
@@ -295,64 +426,73 @@
                 </div>
               </div>
 
-              <div class="mt-5 flex flex-col sm:flex-row gap-3">
+              <div class="mt-5 flex flex-col gap-3 sm:flex-row">
                 <button
                   id="scanBtn"
                   type="button"
-                  class="btn-glow w-full rounded-2xl border border-neon-cyan/35 bg-gradient-to-b from-black/40 to-black/70 px-5 py-4 font-mono text-base sm:text-lg text-neon-cyan hover:from-black/35 hover:to-black/65 focus:outline-none focus:ring-2 focus:ring-neon-cyan/40 active:scale-[0.99]"
+                  class="control-btn btn-glow w-full rounded-2xl border border-neon-cyan/35 bg-gradient-to-b from-black/30 to-black/70 px-5 py-4 font-mono text-base text-neon-cyan hover:from-black/25 hover:to-black/60 focus:outline-none focus:ring-2 focus:ring-neon-cyan/40 active:scale-[0.99] sm:text-lg"
                 >
-                  Escanear
+                  Fazer Escaneamento
                 </button>
                 <button
                   id="reScanBtn"
                   type="button"
-                  class="w-full sm:w-auto rounded-2xl border border-sky-300/25 bg-sky-500/10 px-5 py-4 font-mono text-sm text-sky-200 hover:bg-sky-500/15 focus:outline-none focus:ring-2 focus:ring-sky-300/30 shadow-[0_0_18px_rgba(56,189,248,.16)]"
+                  class="control-btn w-full rounded-2xl border border-sky-300/25 bg-sky-500/10 px-5 py-4 font-mono text-sm text-sky-200 hover:bg-sky-500/15 focus:outline-none focus:ring-2 focus:ring-sky-300/30 shadow-[0_0_18px_rgba(56,189,248,.16)] sm:w-auto"
                   title="Repetir o escaneamento mostrando o diagnóstico anterior"
                 >
-                  AUX
+                  Repetir
                 </button>
                 <button
                   id="resetBtn"
                   type="button"
-                  class="w-full sm:w-auto rounded-2xl border border-white/10 bg-white/5 px-5 py-4 font-mono text-sm text-slate-200 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/15"
+                  class="control-btn w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-4 font-mono text-sm text-slate-200 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/15 sm:w-auto"
                 >
                   Reset
                 </button>
               </div>
 
-              <p class="mt-3 text-xs text-slate-400">
-                Dica: no celular, libere a câmera frontal e aproxime o rosto antes de escanear.
+              <p class="mt-4 rounded-2xl border border-white/5 bg-white/[0.03] px-4 py-3 text-xs text-slate-400">
+                Dica: aponte a câmera para a pessoa e chegue mais perto para o robô reconhecer o rosto.
               </p>
             </div>
           </section>
 
           <!-- Painel -->
-          <section class="rounded-2xl border border-neon-green/15 bg-black/35 shadow-glow">
+          <section class="panel-shell rounded-[28px] border border-neon-green/15 shadow-glow">
             <div class="p-4 sm:p-6">
-              <h2 class="font-mono text-lg text-neon-green">Painel de Diagnóstico</h2>
+              <div>
+                <div class="section-label text-[11px] font-mono text-slate-300/70">Painel Divertido</div>
+                <h2 class="mt-1 font-mono text-lg text-lime-300">Painel do Robô</h2>
+              </div>
 
-              <div class="mt-4 grid grid-cols-2 gap-3">
-                <div class="rounded-xl border border-neon-cyan/15 bg-black/55 p-4">
+              <div class="mt-5 grid grid-cols-2 gap-3">
+                <div class="info-card rounded-2xl border border-neon-cyan/15 p-4">
                   <div class="text-xs font-mono text-slate-400">Tempo</div>
                   <div id="timeBox" class="mt-1 font-mono text-3xl text-neon-cyan">--</div>
                 </div>
-                <div class="rounded-xl border border-neon-green/15 bg-black/55 p-4">
+                <div class="info-card rounded-2xl border border-neon-green/15 p-4">
                   <div class="text-xs font-mono text-slate-400">Sinal</div>
                   <div id="signalBox" class="mt-1 font-mono text-3xl text-neon-green">OK</div>
                 </div>
               </div>
 
-              <div class="mt-4 rounded-xl border border-white/10 bg-black/55 p-4">
-                <div class="text-xs font-mono text-slate-400">Log</div>
+              <div class="info-card mt-4 rounded-2xl border border-white/10 p-4">
+                <div class="flex items-center justify-between gap-3">
+                  <div class="text-xs font-mono text-slate-300">Mensagens</div>
+                  <div class="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-[10px] font-mono uppercase tracking-[0.2em] text-slate-500">
+                    ao vivo
+                  </div>
+                </div>
                 <div id="log" class="mt-2 space-y-2 font-mono text-sm text-slate-200 max-h-[260px] overflow-auto pr-1"></div>
               </div>
 
-              <div class="mt-4 rounded-xl border border-neon-cyan/10 bg-black/45 p-4">
-                <div class="text-xs font-mono text-slate-400">Modo</div>
-                <div class="mt-2 flex flex-wrap gap-2">
-                  <span class="rounded-full border border-neon-cyan/25 bg-black/60 px-3 py-1 text-xs font-mono text-neon-cyan">Robô</span>
-                  <span class="rounded-full border border-neon-green/25 bg-black/60 px-3 py-1 text-xs font-mono text-neon-green">Bipes retrô</span>
-                  <span class="rounded-full border border-white/10 bg-black/60 px-3 py-1 text-xs font-mono text-slate-200">Scan 7s</span>
+              <div class="info-card mt-4 rounded-2xl border border-neon-cyan/10 p-4">
+                <div class="text-xs font-mono text-slate-300">Modo</div>
+                <div class="chip-grid mt-3">
+                  <span class="mode-chip text-xs font-mono text-cyan-200">Robô</span>
+                  <span class="mode-chip text-xs font-mono text-pink-200">Sons legais</span>
+                  <span class="mode-chip text-xs font-mono text-yellow-200">Scan 7s</span>
+                  <span class="mode-chip text-xs font-mono text-lime-200">Detector de rosto</span>
                 </div>
               </div>
             </div>
@@ -361,8 +501,8 @@
       </main>
 
       <footer class="px-4 pb-6 sm:px-8">
-        <div class="mx-auto max-w-4xl text-xs text-slate-500">
-          Feito para diversão. Não é detector de verdade de verdade.
+        <div class="mx-auto max-w-4xl rounded-2xl border border-white/5 bg-white/[0.03] px-4 py-3 text-center text-xs text-slate-500">
+          Feito para diversão e risadas. Este robô brincalhão não diz verdades de verdade.
         </div>
       </footer>
     </div>
@@ -900,7 +1040,7 @@
 
         cameraBtn.disabled = true;
         cameraBtn.classList.add("opacity-60");
-        setCameraStatus("Ligando câmera...", "cyan");
+          setCameraStatus("Ligando câmera traseira...", "cyan");
         cameraFrameText.textContent = "Inicializando";
 
         try {
@@ -909,7 +1049,7 @@
           cameraStream = await navigator.mediaDevices.getUserMedia({
             audio: false,
             video: {
-              facingMode: "user",
+                facingMode: { ideal: "environment" },
               width: { ideal: 640 },
               height: { ideal: 480 },
             },
@@ -921,10 +1061,10 @@
           cameraPreview.classList.remove("hidden");
           cameraPlaceholder.classList.add("hidden");
           cameraShell.dataset.state = "search";
-          cameraBtn.textContent = "Câmera ativa";
+          cameraBtn.textContent = "Câmera traseira ativa";
           setCameraStatus("Procurando rosto...", "cyan");
           cameraFrameText.textContent = "Posicione o rosto";
-          addLog("Câmera frontal ativada.", "good");
+          addLog("Câmera traseira ativada.", "good");
           startCameraLoop();
           refreshScanAvailability();
           return true;
@@ -957,7 +1097,7 @@
         if (!faceCloseEnough) {
           setStatus("Erro", "amber");
           if (faceVisible) {
-            setDisplay("ERRO DE PROXIMIDADE.", "Aproxime mais o rosto da câmera frontal.");
+            setDisplay("ERRO DE PROXIMIDADE.", "Aproxime mais o rosto da câmera traseira.");
             addLog("Escaneamento bloqueado: o rosto ainda está longe.", "warn");
           } else {
             setDisplay("ERRO DE PROXIMIDADE.", "Nenhum rosto válido detectado na câmera.");
