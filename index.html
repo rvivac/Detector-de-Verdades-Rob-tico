@@ -1227,6 +1227,37 @@
         cameraShell.classList.toggle("webcam-only-active", on);
       }
 
+      function stopCamera() {
+        if (abortScan) abortScan.abort("camera-off");
+
+        if (cameraLoop) cancelAnimationFrame(cameraLoop);
+        cameraLoop = null;
+        detectorBusy = false;
+
+        if (cameraStream) {
+          cameraStream.getTracks().forEach((track) => track.stop());
+        }
+
+        cameraStream = null;
+        cameraReady = false;
+        faceVisible = false;
+        faceCloseEnough = false;
+        stableFaceFrames = 0;
+        lastPresenceState = "idle";
+
+        cameraPreview.pause();
+        cameraPreview.srcObject = null;
+        hideCameraPreview();
+        setWebcamOnlyPreviewMode(false);
+        cameraShell.dataset.state = "idle";
+        cameraBtn.textContent = "Ativar câmera";
+        cameraFrameText.textContent = "Aguardando câmera";
+        setCameraStatus("Câmera desligada", "warn");
+        setDisplay("Encoste o dedo e aperte Escanear");
+        addLog("Câmera desativada.", "normal");
+        refreshScanAvailability();
+      }
+
       function refreshScanAvailability() {
         const canScan = cameraReady && (webcamOnlyMode || faceCloseEnough) && !scanning;
         scanBtn.disabled = !canScan;
@@ -1581,7 +1612,7 @@
             cameraFrameText.textContent = "Posicione o rosto";
             startCameraLoop();
           }
-          cameraBtn.textContent = "Câmera ativa";
+          cameraBtn.textContent = "Desativar câmera";
           addLog(`Câmera ${label} ativada.`, "good");
           restoreScannerDisplay();
           refreshScanAvailability();
@@ -1860,6 +1891,10 @@
       });
 
       cameraBtn.addEventListener("click", async () => {
+        if (cameraReady) {
+          stopCamera();
+          return;
+        }
         await startCamera();
       });
 
