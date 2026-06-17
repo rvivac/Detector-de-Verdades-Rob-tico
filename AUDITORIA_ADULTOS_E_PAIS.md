@@ -10,7 +10,7 @@ Este documento foi criado para auditoria de adultos e pais preocupados com a int
 
 ### 2. PROCESSAMENTO LOCAL VS. NUVEM (TRÁFEGO DE REDE)
 
-**Operação 100% Offline.** O aplicativo funciona inteiramente sem necessidade de conexão com a internet. A lista contendo as "verdades engraçadas" está incorporada localmente (`hardcoded`) dentro do código compilado do aplicativo. Como o sistema não gera tráfego de dados de saída (`egress data`), é impossível ocorrer qualquer tipo de vazamento ou interceptação de informações por terceiros.
+**Operação 100% Offline.** Como o aplicativo foi desenvolvido para operar de forma 100% offline e não solicita permissões de rede ao sistema operacional, a superfície de ataque para exfiltração de dados é mitigada. Não há geração de tráfego de dados de saída (`egress data`), impedindo a interceptação ou o vazamento de informações pela rede para servidores de terceiros.
 
 ### 3. PERMISSÕES DO SISTEMA OPERACIONAL
 
