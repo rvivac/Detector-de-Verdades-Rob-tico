@@ -284,12 +284,235 @@
       }
 
       .camera-video {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        display: block;
         width: 100%;
         height: 100%;
         object-fit: contain;
         object-position: center center;
-        filter: contrast(1.08) saturate(1.05) brightness(0.9);
-        background: rgba(2, 6, 23, 0.98);
+        filter: contrast(1.08) saturate(1.08) brightness(1);
+        background: #020617;
+      }
+
+      .camera-effects {
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 180ms ease;
+      }
+
+      .camera-shell.camera-scanning .camera-effects {
+        opacity: 1;
+      }
+
+      .camera-scan-beam {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: -18%;
+        height: 30%;
+        background: linear-gradient(180deg, rgba(34, 211, 238, 0), rgba(34, 211, 238, 0.32), rgba(57, 255, 20, 0));
+        filter: blur(2px);
+        box-shadow: 0 0 22px rgba(34, 211, 238, 0.24);
+      }
+
+      .camera-shell.camera-scanning .camera-scan-beam {
+        animation: cameraBeam 1.5s linear infinite;
+      }
+
+      @keyframes cameraBeam {
+        0% { transform: translateY(-26%); }
+        100% { transform: translateY(360%); }
+      }
+
+      .camera-reticle {
+        position: absolute;
+        inset: 14% 18%;
+        border: 1px solid rgba(34, 211, 238, 0.38);
+        border-radius: 18px;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+      }
+
+      .camera-reticle::before,
+      .camera-reticle::after {
+        content: "";
+        position: absolute;
+        border-radius: inherit;
+      }
+
+      .camera-reticle::before {
+        inset: 12% 22%;
+        border: 1px dashed rgba(57, 255, 20, 0.45);
+      }
+
+      .camera-reticle::after {
+        inset: 0;
+        background:
+          linear-gradient(rgba(34, 211, 238, 0.14), rgba(34, 211, 238, 0.14)) center / 1px 100% no-repeat,
+          linear-gradient(90deg, rgba(34, 211, 238, 0.14), rgba(34, 211, 238, 0.14)) center / 100% 1px no-repeat;
+      }
+
+      .camera-skeleton {
+        position: absolute;
+        left: 50%;
+        top: 18%;
+        width: 120px;
+        height: 168px;
+        transform: translateX(-50%);
+      }
+
+      .camera-skeleton .head,
+      .camera-skeleton .body,
+      .camera-skeleton .pelvis,
+      .camera-skeleton .arm-left,
+      .camera-skeleton .arm-right,
+      .camera-skeleton .leg-left,
+      .camera-skeleton .leg-right {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+
+      .camera-skeleton .head {
+        top: 0;
+        width: 42px;
+        height: 42px;
+        border: 2px solid rgba(255, 255, 255, 0.86);
+        border-radius: 999px;
+        box-shadow: 0 0 18px rgba(34, 211, 238, 0.22);
+      }
+
+      .camera-skeleton .head::before,
+      .camera-skeleton .head::after {
+        content: "";
+        position: absolute;
+        top: 12px;
+        width: 6px;
+        height: 6px;
+        border-radius: 999px;
+        background: rgba(57, 255, 20, 0.95);
+      }
+
+      .camera-skeleton .head::before { left: 10px; }
+      .camera-skeleton .head::after { right: 10px; }
+
+      .camera-skeleton .body {
+        top: 42px;
+        width: 2px;
+        height: 58px;
+        background: rgba(255, 255, 255, 0.88);
+      }
+
+      .camera-skeleton .pelvis {
+        top: 98px;
+        width: 48px;
+        height: 2px;
+        background: rgba(255, 255, 255, 0.88);
+      }
+
+      .camera-skeleton .arm-left,
+      .camera-skeleton .arm-right {
+        top: 58px;
+        width: 44px;
+        height: 2px;
+        background: rgba(255, 255, 255, 0.88);
+        transform-origin: center left;
+      }
+
+      .camera-skeleton .arm-left {
+        margin-left: -18px;
+        transform: translateX(-50%) rotate(28deg);
+      }
+
+      .camera-skeleton .arm-right {
+        margin-left: 18px;
+        transform: translateX(-50%) rotate(-28deg);
+      }
+
+      .camera-skeleton .leg-left,
+      .camera-skeleton .leg-right {
+        top: 116px;
+        width: 54px;
+        height: 2px;
+        background: rgba(255, 255, 255, 0.88);
+      }
+
+      .camera-skeleton .leg-left {
+        margin-left: -16px;
+        transform: translateX(-50%) rotate(54deg);
+      }
+
+      .camera-skeleton .leg-right {
+        margin-left: 16px;
+        transform: translateX(-50%) rotate(-54deg);
+      }
+
+      .camera-shell.camera-scanning .camera-skeleton {
+        animation: skeletonPulse 0.9s ease-in-out infinite alternate;
+      }
+
+      .camera-shell.webcam-only-active {
+        background: #020617;
+      }
+
+      .camera-shell.webcam-only-active .camera-effects,
+      .camera-shell.webcam-only-active .camera-overlay-chrome,
+      .camera-shell.webcam-only-active .camera-overlay-label {
+        display: none !important;
+      }
+
+      @keyframes skeletonPulse {
+        0% { opacity: 0.45; filter: drop-shadow(0 0 2px rgba(34, 211, 238, 0.22)); }
+        100% { opacity: 0.96; filter: drop-shadow(0 0 10px rgba(57, 255, 20, 0.4)); }
+      }
+
+      .result-modal-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 60;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+        background: rgba(2, 6, 23, 0.82);
+        backdrop-filter: blur(8px);
+      }
+
+      .result-modal-card {
+        width: min(100%, 32rem);
+        border-radius: 24px;
+        border: 1px solid rgba(34, 211, 238, 0.22);
+        background:
+          radial-gradient(circle at top, rgba(34, 211, 238, 0.10), transparent 32%),
+          linear-gradient(180deg, rgba(15, 23, 42, 0.98), rgba(2, 6, 23, 0.95));
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.06),
+          0 24px 60px rgba(2, 6, 23, 0.44);
+      }
+
+      .adult-menu-btn {
+        position: fixed;
+        right: 1rem;
+        bottom: 1rem;
+        z-index: 50;
+      }
+
+      .adult-modal-card {
+        width: min(100%, 56rem);
+        max-height: min(88vh, 920px);
+        overflow: auto;
+        border-radius: 24px;
+        border: 1px solid rgba(34, 211, 238, 0.22);
+        background:
+          radial-gradient(circle at top, rgba(34, 211, 238, 0.10), transparent 32%),
+          linear-gradient(180deg, rgba(15, 23, 42, 0.98), rgba(2, 6, 23, 0.95));
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.06),
+          0 24px 60px rgba(2, 6, 23, 0.44);
       }
     </style>
 
@@ -384,15 +607,14 @@
                       <div class="info-card mt-5 rounded-2xl border border-neon-cyan/20 p-4 text-left">
                         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                           <div>
-                            <div class="text-xs font-mono tracking-widest text-slate-400">MÓDULO DE CÂMERA</div>
-                            <div id="cameraStatusText" class="mt-1 text-sm font-mono text-amber-200">Câmera desligada</div>
+                            <div id="cameraStatusText" class="text-sm font-mono text-amber-200">Câmera desligada</div>
                           </div>
                           <button
                             id="cameraBtn"
                             type="button"
                             class="control-btn rounded-xl border border-neon-green/25 bg-neon-green/10 px-4 py-2 text-xs font-mono text-neon-green hover:bg-neon-green/15 focus:outline-none focus:ring-2 focus:ring-neon-green/25"
                           >
-                            Ativar câmera traseira
+                            Ativar câmera
                           </button>
                         </div>
 
@@ -402,18 +624,23 @@
                           class="camera-shell mt-4 rounded-2xl border border-neon-cyan/15"
                         >
                           <video id="cameraPreview" class="camera-video hidden" autoplay playsinline muted></video>
-                          <div class="absolute inset-0 border border-neon-cyan/15 pointer-events-none"></div>
-                          <div class="absolute inset-x-4 top-4 flex items-center justify-between text-[11px] font-mono text-slate-300 pointer-events-none">
+                          <div class="camera-overlay-chrome absolute inset-0 border border-neon-cyan/15 pointer-events-none"></div>
+                          <div class="camera-effects">
+                            <div class="camera-scan-beam"></div>
+                            <div class="camera-reticle"></div>
+                            <div class="camera-skeleton">
+                              <div class="head"></div>
+                              <div class="body"></div>
+                              <div class="pelvis"></div>
+                              <div class="arm-left"></div>
+                              <div class="arm-right"></div>
+                              <div class="leg-left"></div>
+                              <div class="leg-right"></div>
+                            </div>
+                          </div>
+                          <div class="camera-overlay-label absolute inset-x-4 top-4 flex items-center justify-between text-[11px] font-mono text-slate-300 pointer-events-none">
                             <span>VISUALIZAÇÃO</span>
                             <span id="cameraFrameText">Aguardando câmera</span>
-                          </div>
-                          <div id="cameraPlaceholder" class="absolute inset-0 grid place-items-center p-4 text-center">
-                            <div>
-                              <div class="text-sm font-mono text-neon-cyan">Ative a câmera para iniciar</div>
-                              <div class="mt-2 max-w-[18rem] text-xs font-mono text-slate-400">
-                                Posicione a pessoa de frente para a câmera.
-                              </div>
-                            </div>
                           </div>
                         </div>
                         <div class="mt-3 text-xs text-slate-400">
@@ -488,12 +715,93 @@
           </section>
         </div>
       </main>
+    </div>
 
-      <footer class="px-4 pb-6 sm:px-8">
-        <div class="mx-auto max-w-4xl rounded-2xl border border-white/5 bg-white/[0.03] px-4 py-3 text-center text-xs text-slate-500">
-          Simulação visual para fins recreativos. Não representa um detector de verdade real.
+    <button
+      id="adultMenuBtn"
+      type="button"
+      class="adult-menu-btn control-btn rounded-full border border-neon-cyan/30 bg-black/70 px-4 py-2 text-[11px] font-mono uppercase tracking-[0.18em] text-neon-cyan hover:bg-black/85 focus:outline-none focus:ring-2 focus:ring-neon-cyan/35"
+      title="Abrir menu para adultos"
+    >
+      Menu para Adultos
+    </button>
+
+    <div id="resultModal" class="result-modal-backdrop hidden">
+      <div class="result-modal-card p-5 sm:p-6">
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <div class="text-xs font-mono tracking-[0.24em] text-slate-400">RESULTADO DO ESCANEAMENTO</div>
+            <h3 class="mt-2 font-mono text-xl text-neon-cyan sm:text-2xl">Diagnóstico</h3>
+          </div>
+          <button
+            id="closeResultModalBtn"
+            type="button"
+            class="control-btn rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-mono text-slate-200 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/15"
+            title="Fechar resultado"
+          >
+            Fechar
+          </button>
         </div>
-      </footer>
+        <div class="info-card mt-4 rounded-2xl border border-neon-cyan/20 p-4 sm:p-5">
+          <div id="resultModalText" class="font-mono text-base leading-7 text-slate-100 sm:text-lg"></div>
+        </div>
+        <div class="mt-4 text-xs text-slate-400">
+          Resultado recreativo exibido ao final do escaneamento.
+        </div>
+      </div>
+    </div>
+
+    <div id="adultModal" class="result-modal-backdrop hidden">
+      <div class="adult-modal-card p-5 sm:p-6">
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <div class="text-xs font-mono tracking-[0.24em] text-slate-400">MENU PARA ADULTOS</div>
+            <h3 class="mt-2 font-mono text-xl text-neon-cyan sm:text-2xl">Observações de Privacidade e Segurança</h3>
+          </div>
+          <button
+            id="closeAdultModalBtn"
+            type="button"
+            class="control-btn rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-mono text-slate-200 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/15"
+            title="Fechar menu para adultos"
+          >
+            Fechar
+          </button>
+        </div>
+
+        <div class="mt-4 space-y-4">
+          <section class="info-card rounded-2xl border border-neon-cyan/20 p-4 sm:p-5">
+            <div class="text-xs font-mono tracking-[0.22em] text-slate-400">1. COLETA E ARMAZENAMENTO DE DADOS (BIOMETRIA)</div>
+            <div class="mt-3 font-mono text-sm leading-7 text-slate-100 sm:text-base">
+              <strong class="text-neon-cyan">Zero Armazenamento Local ou em Nuvem.</strong>
+              O aplicativo não realiza mapeamento biométrico real. A imagem da câmera serve apenas como plano de fundo visual para a animação do efeito de escaneamento. Nenhuma foto, vetor facial ou registro de imagem é salvo no dispositivo ou transmitido para servidores externos. Todo o processamento visual ocorre temporariamente na memória RAM volátil e é descartado imediatamente ao fechar a tela ou encerrar o aplicativo.
+            </div>
+          </section>
+
+          <section class="info-card rounded-2xl border border-neon-green/20 p-4 sm:p-5">
+            <div class="text-xs font-mono tracking-[0.22em] text-slate-400">2. PROCESSAMENTO LOCAL VS. NUVEM (TRÁFEGO DE REDE)</div>
+            <div class="mt-3 font-mono text-sm leading-7 text-slate-100 sm:text-base">
+              <strong class="text-neon-green">Operação 100% Offline.</strong>
+              O aplicativo funciona inteiramente sem necessidade de conexão com a internet. A lista contendo as "verdades engraçadas" está incorporada localmente (`hardcoded`) dentro do código compilado do aplicativo. Como o sistema não gera tráfego de dados de saída (`egress data`), é impossível ocorrer qualquer tipo de vazamento ou interceptação de informações por terceiros.
+            </div>
+          </section>
+
+          <section class="info-card rounded-2xl border border-sky-300/20 p-4 sm:p-5">
+            <div class="text-xs font-mono tracking-[0.22em] text-slate-400">3. PERMISSÕES DO SISTEMA OPERACIONAL</div>
+            <div class="mt-3 font-mono text-sm leading-7 text-slate-100 sm:text-base">
+              <strong class="text-sky-200">Princípio do Privilégio Mínimo.</strong>
+              A permissão de acesso à câmera é solicitada com o único propósito de renderizar o feed de vídeo em tempo real na interface do usuário, construindo a estética necessária para a brincadeira. O aplicativo foi desenvolvido para não solicitar nenhuma outra permissão invasiva, como acesso à galeria de fotos salvas, lista de contatos, localização (GPS) ou microfone.
+            </div>
+          </section>
+
+          <section class="info-card rounded-2xl border border-amber-300/20 p-4 sm:p-5">
+            <div class="text-xs font-mono tracking-[0.22em] text-slate-400">4. MODERAÇÃO DE CONTEÚDO (SEGURANÇA PSICOLÓGICA)</div>
+            <div class="mt-3 font-mono text-sm leading-7 text-slate-100 sm:text-base">
+              <strong class="text-amber-200">Curadoria Estática de Conteúdo.</strong>
+              O algoritmo de resposta não utiliza inteligência artificial generativa em tempo real, o que elimina o risco de alucinações ou respostas inadequadas. Todas as frases de humor foram inseridas e revisadas manualmente por programadores humanos. O banco de dados fixo é composto estritamente por piadas inocentes, previsões absurdas e dinâmicas leves apropriadas para todas as idades.
+            </div>
+          </section>
+        </div>
+      </div>
     </div>
 
     <script>
@@ -513,16 +821,21 @@
       const scanBtn = $("scanBtn");
       const reScanBtn = $("reScanBtn");
       const resetBtn = $("resetBtn");
+      const adultMenuBtn = $("adultMenuBtn");
       const cameraBtn = $("cameraBtn");
       const cameraPreview = $("cameraPreview");
       const cameraShell = $("cameraShell");
-      const cameraPlaceholder = $("cameraPlaceholder");
       const cameraStatusText = $("cameraStatusText");
       const cameraFrameText = $("cameraFrameText");
       const scanner = $("scanner");
       const statusText = $("statusText");
       const displayMain = $("displayMain");
       const displaySub = $("displaySub");
+      const resultModal = $("resultModal");
+      const resultModalText = $("resultModalText");
+      const closeResultModalBtn = $("closeResultModalBtn");
+      const adultModal = $("adultModal");
+      const closeAdultModalBtn = $("closeAdultModalBtn");
       const timeBox = $("timeBox");
       const signalBox = $("signalBox");
       const logEl = $("log");
@@ -542,6 +855,7 @@
       let faceCloseEnough = false;
       let stableFaceFrames = 0;
       let lastPresenceState = "idle";
+      const webcamOnlyMode = true;
 
       const scanPhrases = [
         "Analisando DNA...",
@@ -841,6 +1155,43 @@
         }
       }
 
+      function openResultModal(result) {
+        resultModalText.textContent = result;
+        resultModal.classList.remove("hidden");
+      }
+
+      function restoreScannerDisplay() {
+        if (cameraReady) {
+          if (webcamOnlyMode) {
+            setDisplay("Webcam ativa.", "Confirme visualmente se o video esta entrando.");
+            return;
+          }
+          if (faceCloseEnough) {
+            setDisplay("Encoste o dedo e aperte Escanear");
+          } else if (faceVisible) {
+            setDisplay("Aproxime mais o rosto da câmera.");
+          } else {
+            setDisplay("Posicione o rosto na câmera.");
+          }
+          return;
+        }
+
+        setDisplay("Encoste o dedo e aperte Escanear");
+      }
+
+      function closeResultModal() {
+        resultModal.classList.add("hidden");
+        restoreScannerDisplay();
+      }
+
+      function openAdultModal() {
+        adultModal.classList.remove("hidden");
+      }
+
+      function closeAdultModal() {
+        adultModal.classList.add("hidden");
+      }
+
       function setCameraStatus(text, tone = "warn") {
         cameraStatusText.textContent = text;
         cameraStatusText.className =
@@ -851,8 +1202,24 @@
               : "mt-1 text-sm font-mono text-amber-200";
       }
 
+      function revealCameraPreview() {
+        cameraPreview.classList.remove("hidden");
+        cameraPreview.hidden = false;
+        cameraPreview.style.display = "block";
+      }
+
+      function hideCameraPreview() {
+        cameraPreview.classList.add("hidden");
+        cameraPreview.hidden = true;
+        cameraPreview.style.display = "";
+      }
+
+      function setWebcamOnlyPreviewMode(on) {
+        cameraShell.classList.toggle("webcam-only-active", on);
+      }
+
       function refreshScanAvailability() {
-        const canScan = cameraReady && faceCloseEnough && !scanning;
+        const canScan = cameraReady && (webcamOnlyMode || faceCloseEnough) && !scanning;
         scanBtn.disabled = !canScan;
         scanBtn.classList.toggle("opacity-60", !canScan);
         scanBtn.classList.toggle("cursor-not-allowed", !canScan);
@@ -860,6 +1227,7 @@
 
       function setScanningUI(on) {
         scanner.classList.toggle("scanning", on);
+        cameraShell.classList.toggle("camera-scanning", on);
         signalBox.textContent = on ? "SCAN" : "OK";
         signalBox.className = on ? "mt-1 font-mono text-3xl text-amber-300" : "mt-1 font-mono text-3xl text-neon-green";
         refreshScanAvailability();
@@ -1016,11 +1384,136 @@
         cameraLoop = requestAnimationFrame(loop);
       }
 
+      async function requestCameraStream() {
+        const isLikelyMobile = /android|iphone|ipad|ipod/i.test(navigator.userAgent);
+        let devices = [];
+
+        try {
+          devices = await navigator.mediaDevices.enumerateDevices();
+          // #region debug-point A:enumerate-devices
+          fetch("http://127.0.0.1:7777/event",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({sessionId:"desktop-camera-open",runId:"post-fix",hypothesisId:"A",location:"index.html:requestCameraStream:enumerateDevices",msg:"[DEBUG] Dispositivos de midia listados",data:{devices:devices.map((d)=>({kind:d.kind,label:d.label||"",deviceId:(d.deviceId||"").slice(0,12)}))},ts:Date.now()})}).catch(()=>{});
+          // #endregion
+        } catch (error) {
+          // #region debug-point A:enumerate-devices-fail
+          fetch("http://127.0.0.1:7777/event",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({sessionId:"desktop-camera-open",runId:"post-fix",hypothesisId:"A",location:"index.html:requestCameraStream:enumerateDevices:fail",msg:"[DEBUG] Falha ao listar dispositivos",data:{name:error?.name||null,message:error?.message||null},ts:Date.now()})}).catch(()=>{});
+          // #endregion
+        }
+
+        const firstVideoInput = devices.find((d) => d.kind === "videoinput" && d.deviceId);
+        const attempts = isLikelyMobile
+          ? [
+              {
+                label: "traseira",
+                constraints: {
+                  audio: false,
+                  video: {
+                    facingMode: { ideal: "environment" },
+                    width: { ideal: 640 },
+                    height: { ideal: 480 },
+                  },
+                },
+              },
+              {
+                label: "padrão",
+                constraints: {
+                  audio: false,
+                  video: {
+                    width: { ideal: 640 },
+                    height: { ideal: 480 },
+                  },
+                },
+              },
+              {
+                label: "básica",
+                constraints: { audio: false, video: true },
+              },
+            ]
+          : [
+              ...(firstVideoInput
+                ? [
+                    {
+                      label: "deviceId",
+                      constraints: {
+                        audio: false,
+                        video: {
+                          deviceId: { exact: firstVideoInput.deviceId },
+                          width: { ideal: 640 },
+                          height: { ideal: 480 },
+                        },
+                      },
+                    },
+                  ]
+                : []),
+              {
+                label: "padrão",
+                constraints: {
+                  audio: false,
+                  video: {
+                    width: { ideal: 640 },
+                    height: { ideal: 480 },
+                  },
+                },
+              },
+              {
+                label: "básica",
+                constraints: { audio: false, video: true },
+              },
+              {
+                label: "traseira",
+                constraints: {
+                  audio: false,
+                  video: {
+                    facingMode: { ideal: "environment" },
+                    width: { ideal: 640 },
+                    height: { ideal: 480 },
+                  },
+                },
+              },
+            ];
+
+        let lastError = null;
+
+        for (const attempt of attempts) {
+          let pendingTimer = null;
+          try {
+            // #region debug-point A:camera-attempt
+            fetch("http://127.0.0.1:7777/event",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({sessionId:"desktop-camera-open",runId:"post-fix",hypothesisId:"A",location:"index.html:requestCameraStream:before-getUserMedia",msg:"[DEBUG] Tentando abrir camera",data:{label:attempt.label,constraints:attempt.constraints,isLikelyMobile},ts:Date.now()})}).catch(()=>{});
+            // #endregion
+            // #region debug-point A:camera-attempt-pending
+            pendingTimer = setTimeout(()=>{fetch("http://127.0.0.1:7777/event",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({sessionId:"desktop-camera-open",runId:"post-fix",hypothesisId:"A",location:"index.html:requestCameraStream:pending",msg:"[DEBUG] getUserMedia continua pendente",data:{label:attempt.label,isLikelyMobile},ts:Date.now()})}).catch(()=>{});},4000);
+            // #endregion
+            const stream = await Promise.race([
+              navigator.mediaDevices.getUserMedia(attempt.constraints),
+              new Promise((_, reject) =>
+                setTimeout(() => reject(new Error(`getUserMedia timeout (${attempt.label})`)), 4500)
+              ),
+            ]);
+            if (pendingTimer) clearTimeout(pendingTimer);
+            // #region debug-point A:camera-attempt-success
+            fetch("http://127.0.0.1:7777/event",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({sessionId:"desktop-camera-open",runId:"post-fix",hypothesisId:"A",location:"index.html:requestCameraStream:success",msg:"[DEBUG] Camera aberta com sucesso",data:{label:attempt.label,trackCount:stream?.getTracks?.().length||0},ts:Date.now()})}).catch(()=>{});
+            // #endregion
+            return { stream, label: attempt.label };
+          } catch (error) {
+            if (pendingTimer) clearTimeout(pendingTimer);
+            // #region debug-point A:camera-attempt-fail
+            fetch("http://127.0.0.1:7777/event",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({sessionId:"desktop-camera-open",runId:"post-fix",hypothesisId:"A",location:"index.html:requestCameraStream:fail",msg:"[DEBUG] Tentativa de camera falhou",data:{label:attempt.label,name:error?.name||null,message:error?.message||null,isLikelyMobile},ts:Date.now()})}).catch(()=>{});
+            // #endregion
+            lastError = error;
+          }
+        }
+
+        throw lastError ?? new Error("Nenhuma câmera disponível");
+      }
+
       async function startCamera() {
         if (cameraReady && cameraStream) {
           refreshScanAvailability();
           return true;
         }
+
+        // #region debug-point B:start-camera-entry
+        fetch("http://127.0.0.1:7777/event",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({sessionId:"desktop-camera-open",runId:"post-fix",hypothesisId:"B",location:"index.html:startCamera:entry",msg:"[DEBUG] startCamera acionada",data:{cameraReady,hasStream:Boolean(cameraStream),hasMediaDevices:Boolean(navigator.mediaDevices),hasGetUserMedia:Boolean(navigator.mediaDevices?.getUserMedia)},ts:Date.now()})}).catch(()=>{});
+        // #endregion
 
         if (!navigator.mediaDevices?.getUserMedia) {
           setCameraStatus("Seu navegador não suporta câmera", "warn");
@@ -1031,41 +1524,69 @@
 
         cameraBtn.disabled = true;
         cameraBtn.classList.add("opacity-60");
-          setCameraStatus("Ligando câmera traseira...", "cyan");
+        setCameraStatus("Ligando câmera...", "cyan");
         cameraFrameText.textContent = "Inicializando";
 
         try {
-          await loadFaceDetector();
-
-          cameraStream = await navigator.mediaDevices.getUserMedia({
-            audio: false,
-            video: {
-                facingMode: { ideal: "environment" },
-              width: { ideal: 640 },
-              height: { ideal: 480 },
-            },
-          });
+          if (!webcamOnlyMode) {
+            // #region debug-point C:detector-load-start
+            fetch("http://127.0.0.1:7777/event",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({sessionId:"desktop-camera-open",runId:"post-fix",hypothesisId:"C",location:"index.html:startCamera:before-loadFaceDetector",msg:"[DEBUG] Iniciando carga do detector facial",data:{detectorMode,hasDetectorEngine:Boolean(detectorEngine)},ts:Date.now()})}).catch(()=>{});
+            // #endregion
+            await loadFaceDetector();
+            // #region debug-point C:detector-load-success
+            fetch("http://127.0.0.1:7777/event",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({sessionId:"desktop-camera-open",runId:"post-fix",hypothesisId:"C",location:"index.html:startCamera:after-loadFaceDetector",msg:"[DEBUG] Detector facial carregado",data:{detectorMode,hasDetectorEngine:Boolean(detectorEngine)},ts:Date.now()})}).catch(()=>{});
+            // #endregion
+          } else {
+            detectorMode = "disabled";
+            detectorEngine = null;
+            detectorLoadPromise = null;
+            fetch("http://127.0.0.1:7777/event",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({sessionId:"desktop-camera-open",runId:"post-fix",hypothesisId:"C",location:"index.html:startCamera:webcam-only-mode",msg:"[DEBUG] Detector facial desativado temporariamente",data:{webcamOnlyMode:true},ts:Date.now()})}).catch(()=>{});
+          }
+          const { stream, label } = await requestCameraStream();
+          cameraStream = stream;
 
           cameraPreview.srcObject = cameraStream;
+          revealCameraPreview();
           await cameraPreview.play();
+          // #region debug-point D:video-play-success
+          fetch("http://127.0.0.1:7777/event",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({sessionId:"desktop-camera-open",runId:"post-fix",hypothesisId:"D",location:"index.html:startCamera:after-play",msg:"[DEBUG] Video da camera iniciou",data:{label,videoWidth:cameraPreview.videoWidth||0,videoHeight:cameraPreview.videoHeight||0,readyState:cameraPreview.readyState},ts:Date.now()})}).catch(()=>{});
+          // #endregion
           cameraReady = true;
-          cameraPreview.classList.remove("hidden");
-          cameraPlaceholder.classList.add("hidden");
-          cameraShell.dataset.state = "search";
-          cameraBtn.textContent = "Câmera traseira ativa";
-          setCameraStatus("Procurando rosto...", "cyan");
-          cameraFrameText.textContent = "Posicione o rosto";
-          addLog("Câmera traseira ativada.", "good");
-          startCameraLoop();
+          if (webcamOnlyMode) {
+            setWebcamOnlyPreviewMode(true);
+            if (cameraLoop) cancelAnimationFrame(cameraLoop);
+            cameraLoop = null;
+            detectorBusy = false;
+            faceVisible = true;
+            faceCloseEnough = true;
+            stableFaceFrames = 0;
+            lastPresenceState = "ready";
+            cameraShell.dataset.state = "ready";
+            setCameraStatus("Video ativo na webcam", "good");
+            cameraFrameText.textContent = "Video ao vivo";
+            addLog("Detector facial desativado temporariamente para teste visual.", "warn");
+          } else {
+            setWebcamOnlyPreviewMode(false);
+            cameraShell.dataset.state = "search";
+            setCameraStatus("Procurando rosto...", "cyan");
+            cameraFrameText.textContent = "Posicione o rosto";
+            startCameraLoop();
+          }
+          cameraBtn.textContent = "Câmera ativa";
+          addLog(`Câmera ${label} ativada.`, "good");
+          restoreScannerDisplay();
           refreshScanAvailability();
           return true;
-        } catch (_) {
+        } catch (error) {
+          // #region debug-point E:start-camera-fail
+          fetch("http://127.0.0.1:7777/event",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({sessionId:"desktop-camera-open",runId:"post-fix",hypothesisId:"E",location:"index.html:startCamera:catch",msg:"[DEBUG] startCamera falhou",data:{name:error?.name||null,message:error?.message||null,detectorMode,hasDetectorEngine:Boolean(detectorEngine)},ts:Date.now()})}).catch(()=>{});
+          // #endregion
           cameraReady = false;
+          setWebcamOnlyPreviewMode(false);
           faceVisible = false;
           faceCloseEnough = false;
           stableFaceFrames = 0;
-          cameraPreview.classList.add("hidden");
-          cameraPlaceholder.classList.remove("hidden");
+          hideCameraPreview();
           cameraBtn.textContent = "Tentar câmera";
           setCameraStatus("Permissão negada ou sensor indisponível", "warn");
           cameraFrameText.textContent = "Falha";
@@ -1085,10 +1606,14 @@
           if (!ok) return false;
         }
 
+        if (webcamOnlyMode) {
+          return true;
+        }
+
         if (!faceCloseEnough) {
           setStatus("Erro", "amber");
           if (faceVisible) {
-            setDisplay("ERRO DE PROXIMIDADE.", "Aproxime mais o rosto da câmera traseira.");
+            setDisplay("ERRO DE PROXIMIDADE.", "Aproxime mais o rosto da câmera.");
             addLog("Escaneamento bloqueado: o rosto ainda está longe.", "warn");
           } else {
             setDisplay("ERRO DE PROXIMIDADE.", "Nenhum rosto válido detectado na câmera.");
@@ -1216,16 +1741,18 @@
         tick();
 
         // Interrompe se a pessoa se afastar ou sumir da câmera durante o scan.
-        faceGuard = setInterval(() => {
-          if (!cameraReady) {
-            abortScan.abort("camera-off");
-            return;
-          }
+        if (!webcamOnlyMode) {
+          faceGuard = setInterval(() => {
+            if (!cameraReady) {
+              abortScan.abort("camera-off");
+              return;
+            }
 
-          if (!faceCloseEnough) {
-            abortScan.abort(faceVisible ? "face-far" : "face-missing");
-          }
-        }, 250);
+            if (!faceCloseEnough) {
+              abortScan.abort(faceVisible ? "face-far" : "face-missing");
+            }
+          }, 250);
+        }
 
         // Aguarda 7s ou cancelamento
         try {
@@ -1271,16 +1798,22 @@
 
         setDisplay("DIAGNÓSTICO:", result);
         addLog(`DIAGNÓSTICO: ${result}`, "warn");
+        openResultModal(result);
       }
 
       function resetAll() {
         if (abortScan) abortScan.abort();
         scanning = false;
         abortScan = null;
+        closeResultModal();
         setScanningUI(false);
         setStatus("Pronto", "green");
         timeBox.textContent = "--";
-        setDisplay("Encoste o dedo e aperte Escanear", "Sem garantias científicas.");
+        if (cameraReady) {
+          restoreScannerDisplay();
+        } else {
+          setDisplay("Encoste o dedo e aperte Escanear", "Sem garantias científicas.");
+        }
         addLog("Reset realizado.", "normal");
       }
 
@@ -1321,7 +1854,29 @@
         await startCamera();
       });
 
+      adultMenuBtn.addEventListener("click", openAdultModal);
       resetBtn.addEventListener("click", resetAll);
+      closeResultModalBtn.addEventListener("click", closeResultModal);
+      closeAdultModalBtn.addEventListener("click", closeAdultModal);
+      resultModal.addEventListener("click", (ev) => {
+        if (ev.target === resultModal) {
+          closeResultModal();
+        }
+      });
+      adultModal.addEventListener("click", (ev) => {
+        if (ev.target === adultModal) {
+          closeAdultModal();
+        }
+      });
+      window.addEventListener("keydown", (ev) => {
+        if (ev.key === "Escape" && !adultModal.classList.contains("hidden")) {
+          closeAdultModal();
+          return;
+        }
+        if (ev.key === "Escape" && !resultModal.classList.contains("hidden")) {
+          closeResultModal();
+        }
+      });
 
       // --------------------------
       // Instalação (quando disponível)
