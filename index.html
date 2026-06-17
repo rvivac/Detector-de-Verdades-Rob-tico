@@ -324,9 +324,36 @@
         animation: cameraBeam 1.5s linear infinite;
       }
 
+      .camera-trace-lines {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        background:
+          repeating-linear-gradient(
+            to bottom,
+            rgba(34, 211, 238, 0) 0px,
+            rgba(34, 211, 238, 0) 10px,
+            rgba(34, 211, 238, 0.16) 11px,
+            rgba(34, 211, 238, 0) 13px
+          ),
+          linear-gradient(180deg, rgba(34, 211, 238, 0.06), rgba(57, 255, 20, 0.04));
+        mix-blend-mode: screen;
+      }
+
+      .camera-shell.camera-scanning .camera-trace-lines {
+        opacity: 1;
+        animation: traceFlicker 1.1s linear infinite;
+      }
+
       @keyframes cameraBeam {
         0% { transform: translateY(-26%); }
         100% { transform: translateY(360%); }
+      }
+
+      @keyframes traceFlicker {
+        0% { transform: translateY(-6px); opacity: 0.42; }
+        50% { transform: translateY(0); opacity: 0.72; }
+        100% { transform: translateY(6px); opacity: 0.48; }
       }
 
       .camera-reticle {
@@ -459,10 +486,14 @@
         background: #020617;
       }
 
-      .camera-shell.webcam-only-active .camera-effects,
       .camera-shell.webcam-only-active .camera-overlay-chrome,
       .camera-shell.webcam-only-active .camera-overlay-label {
         display: none !important;
+      }
+
+      .camera-shell.webcam-only-active .camera-reticle,
+      .camera-shell.webcam-only-active .camera-skeleton {
+        display: none;
       }
 
       @keyframes skeletonPulse {
@@ -627,6 +658,7 @@
                           <div class="camera-overlay-chrome absolute inset-0 border border-neon-cyan/15 pointer-events-none"></div>
                           <div class="camera-effects">
                             <div class="camera-scan-beam"></div>
+                            <div class="camera-trace-lines"></div>
                             <div class="camera-reticle"></div>
                             <div class="camera-skeleton">
                               <div class="head"></div>
